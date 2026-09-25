@@ -7,125 +7,58 @@ const cors = require('cors');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
-  }
+  cors: { origin: '*', methods: ['GET', 'POST'] }
 });
 
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Port configuration
 const PORT = process.env.PORT || 3000;
 
-// --- INVENTIONS DATABASE (Extensive, hilarious & culturally witty) ---
-const INVENTIONS_DATABASE = [
-  {
-    id: 'chai_wifi',
-    title: 'AI Smart Chai Dispenser with Sarcastic Advice',
-    category: 'Daily Life & Food Tech',
-    realDescription: 'A cutting-edge electric kettle that brews authentic masala chai in 45 seconds while roasting your life choices and offering unsolicited marriage or career advice in 4 different languages.',
-    imposterPrompt: 'You only know it involves hot beverages and giving weird unsolicited feedback. Make up a convincing gadget and pitch it confidently!',
-    baseValue: 4500,
-    tags: ['Chai', 'AI Roaster', 'Morning Energy']
-  },
-  {
-    id: 'traffic_drone',
-    title: 'Personal Traffic-Jumping Hover Umbrella',
-    category: 'Extreme Commute & Transport',
-    realDescription: 'A reinforced carbon-fiber umbrella equipped with quad-copter turbo blades that lifts you 15 feet into the air to casually bypass 2-hour rush hour gridlocks while shielding you from rain.',
-    imposterPrompt: 'You only know it helps people escape bad traffic situations using flying or floating gimmicks. Pitch your wild solution!',
-    baseValue: 7000,
-    tags: ['Flying', 'Anti-Traffic', 'Weatherproof']
-  },
-  {
-    id: 'snooze_slap',
-    title: 'The Wake-Up Slap-O-Matic Bedside Alarm',
-    category: 'Health & Productivity',
-    realDescription: 'An ultra-gentle silicone mechanical hand attached to your alarm clock that gives you progressively firmer slaps, plays loud wedding brass band music, and transfers ₹500 to your arch-enemy if you hit snooze.',
-    imposterPrompt: 'You only know this device forces heavy sleepers to wake up immediately using extreme consequences. Pitch your invention without knowing the exact mechanism!',
-    baseValue: 3200,
-    tags: ['Alarm', 'Anti-Procrastination', 'Discipline']
-  },
-  {
-    id: 'aunty_shield',
-    title: 'The "Beta Shaadi Kab Hai?" Acoustic Noise Jammer',
-    category: 'Social Survival Gear',
-    realDescription: 'Discreet smart earbuds that use inverted phase cancellation to instantly replace intrusive questions about your marriage, salary, and marks with soothing lofi ambient beats or fake urgent phone calls.',
-    imposterPrompt: 'You only know it protects people from uncomfortable family/social conversations at gatherings. Pitch your invention convincingly!',
-    baseValue: 6200,
-    tags: ['Social Life', 'Audio Jammer', 'Peace of Mind']
-  },
-  {
-    id: 'panipuri_meter',
-    title: 'The Infinite Pani-Puri Speed Feeder & Flavor Synthesizer',
-    category: 'Culinary Masterpiece',
-    realDescription: 'A robotic countertop kiosk with calibrated hydraulic nozzles that dispenses perfectly crisp puris with custom spice-level mint water at a blazing speed of 1 puri every 2.3 seconds with automatic extra sukha puri bonus.',
-    imposterPrompt: 'You only know it automates a famous street food experience with crazy high-tech speed and spice control. Bluff your way through the pitch!',
-    baseValue: 8500,
-    tags: ['Street Food', 'Robotics', 'Flavor Tech']
-  },
-  {
-    id: 'ac_remote_finder',
-    title: 'Quantum AC Remote GPS Tracker & Solar Blanket',
-    category: 'Home & Comfort',
-    realDescription: 'A micro-beacon that attaches to your AC remote, shines a laser bat-signal on the ceiling when lost under couch cushions, and features an integrated cooling fabric blanket that adjusts to the exact room temperature.',
-    imposterPrompt: 'You only know it solves the eternal household struggle of living room comfort and lost controllers. Pitch your gadget!',
-    baseValue: 2800,
-    tags: ['Home Tech', 'Cooling', 'Beacon']
-  },
-  {
-    id: 'exam_telepath',
-    title: 'The Emergency Brain Defogger & Formula Projector',
-    category: 'Education & High Stakes',
-    realDescription: 'A sleek pair of augmented-reality spectacles that detects blank-mind panic during high-stakes presentations or exams and projects your forgotten notes onto the inside of your eyelids.',
-    imposterPrompt: 'You only know it helps people look smart and recall memory during stressful tests or interviews. Pitch your invention with confidence!',
-    baseValue: 9000,
-    tags: ['Smart Glasses', 'Memory Hack', 'Confidence']
-  },
-  {
-    id: 'haggling_bot',
-    title: 'The AI Master Bargaining Ear-Piece',
-    category: 'Street Smart Commerce',
-    realDescription: 'A micro-earpiece that analyzes street vendor body language and whispers ruthless haggling comebacks (*"Bhaiya, pados wali dukaan pe 50% sasta mil raha hai"*) until you get maximum discount.',
-    imposterPrompt: 'You only know it is a device designed to win shopping negotiations and get rock-bottom prices anywhere. Pitch it!',
-    baseValue: 5500,
-    tags: ['Bargaining', 'AI Negotiator', 'Money Saver']
-  },
-  {
-    id: 'sock_teleporter',
-    title: 'The Quantum Single-Sock Dimension Portal',
-    category: 'Physics & Mystery',
-    realDescription: 'A magnetic laundry basket attachment that opens a microscopic wormhole to retrieve all the single socks that mysteriously vanish inside washing machines into alternate realities.',
-    imposterPrompt: 'You only know this invention solves a bizarre universal household mystery involving clothes. Invent your pitch!',
-    baseValue: 4000,
-    tags: ['Quantum', 'Laundry', 'Mystery']
-  },
-  {
-    id: 'meeting_cloner',
-    title: 'Holographic "Nodding Yes" Office Clone',
-    category: 'Corporate & Remote Work',
-    realDescription: 'A photorealistic AI hologram projector that attends your 3-hour Zoom meetings, occasionally nods enthusiastically, says *"Let us take this offline"*, and takes meeting notes while you nap.',
-    imposterPrompt: 'You only know it helps remote employees survive boring video meetings without doing real work. Pitch it!',
-    baseValue: 9500,
-    tags: ['Remote Work', 'AI Clone', 'Office Hack']
-  }
-];
+// --- MAP & TRACK DEFINITION ---
+// Arena Track Size: 2400 x 1600
+const TRACK = {
+  width: 2400,
+  height: 1600,
+  checkpoints: [
+    { id: 0, x: 300, y: 350, radius: 180 },
+    { id: 1, x: 1200, y: 250, radius: 180 },
+    { id: 2, x: 2100, y: 350, radius: 180 },
+    { id: 3, x: 2150, y: 1250, radius: 180 },
+    { id: 4, x: 1200, y: 1350, radius: 180 },
+    { id: 5, x: 300, y: 1250, radius: 180 }
+  ],
+  boostPads: [
+    { x: 750, y: 280, w: 100, h: 50, angle: 0 },
+    { x: 1650, y: 280, w: 100, h: 50, angle: 0 },
+    { x: 2150, y: 800, w: 50, h: 100, angle: Math.PI / 2 },
+    { x: 1650, y: 1320, w: 100, h: 50, angle: Math.PI },
+    { x: 750, y: 1320, w: 100, h: 50, angle: Math.PI },
+    { x: 280, y: 800, w: 50, h: 100, angle: -Math.PI / 2 }
+  ],
+  obstacles: [
+    // Center island obstacles
+    { x: 650, y: 550, w: 1100, h: 500, type: 'building' },
+    // Outer boundaries
+    { x: 0, y: 0, w: 2400, h: 60, type: 'wall' },
+    { x: 0, y: 1540, w: 2400, h: 60, type: 'wall' },
+    { x: 0, y: 0, w: 60, h: 1600, type: 'wall' },
+    { x: 2340, y: 0, w: 60, h: 1600, type: 'wall' }
+  ],
+  powerupSpawns: [
+    { x: 450, y: 300, type: 'rocket' },
+    { x: 1450, y: 260, type: 'nitro' },
+    { x: 2150, y: 600, type: 'shield' },
+    { x: 2050, y: 1300, type: 'laser' },
+    { x: 1000, y: 1350, type: 'repair' },
+    { x: 300, y: 1000, type: 'mine' },
+    { x: 1200, y: 800, type: 'rocket' } // Center shortcut
+  ]
+};
 
-// AI Bot names and auto-pitch generators for solo/testing play
-const AI_BOT_PROFILES = [
-  { name: 'ChaiBot-3000', avatar: '☕', bio: 'Caffeine-fueled inventor' },
-  { name: 'SharmaJi_AI', avatar: '🧠', bio: 'Has 99% accuracy in everything' },
-  { name: 'JugaadKing_99', avatar: '🛠️', bio: 'Fixes rockets with duct tape' },
-  { name: 'CryptoDidi', avatar: '🚀', bio: 'Thinks everything runs on Web3' },
-  { name: 'DesiCyberpunk', avatar: '⚡', bio: 'Neon lights and fast deals' }
-];
-
-// Room storage
+// Rooms Registry
 const rooms = new Map();
 
-// Helper to generate unique 4-character room codes
 function generateRoomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
@@ -135,620 +68,680 @@ function generateRoomCode() {
   return rooms.has(code) ? generateRoomCode() : code;
 }
 
-// Room Management Class
+// Vehicle Class & Physics
+class CombatCar {
+  constructor(id, name, color, isHost = false, isBot = false, spawnIndex = 0) {
+    this.id = id;
+    this.name = name;
+    this.color = color || '#00f0ff';
+    this.isHost = isHost;
+    this.isBot = isBot;
+
+    // Spawn Grid positioning
+    const spawnX = 250 + (spawnIndex % 2) * 80;
+    const spawnY = 320 + Math.floor(spawnIndex / 2) * 90;
+
+    this.x = spawnX;
+    this.y = spawnY;
+    this.angle = 0; // Radians
+    this.speed = 0;
+    this.maxSpeed = 12;
+    this.reverseMaxSpeed = -5;
+    this.accel = 0.35;
+    this.decel = 0.2;
+    this.handling = 0.055;
+    this.width = 38;
+    this.height = 22;
+
+    // Combat Stats
+    this.maxHealth = 100;
+    this.health = 100;
+    this.shield = 50;
+    this.maxShield = 50;
+    this.nitro = 100; // 0 to 100
+    this.maxNitro = 100;
+    this.isBoosting = false;
+    this.isDrifting = false;
+    this.isShooting = false;
+    this.lastShotTime = 0;
+    this.weaponType = 'gatling'; // 'gatling', 'rocket', 'laser', 'mine'
+    this.ammo = Infinity;
+    this.specialAmmo = 3;
+
+    // Race Progress
+    this.lap = 1;
+    this.maxLaps = 3;
+    this.currentCheckpoint = 0;
+    this.finished = false;
+    this.finishTime = 0;
+    this.kills = 0;
+    this.deaths = 0;
+    this.score = 0;
+
+    // Input States
+    this.inputs = {
+      up: false,
+      down: false,
+      left: false,
+      right: false,
+      boost: false,
+      shoot: false,
+      drift: false
+    };
+
+    // Bot AI variables
+    this.botTargetCheckpoint = 0;
+    this.botShootCooldown = 0;
+  }
+
+  respawn(spawnIndex = 0) {
+    this.health = this.maxHealth;
+    this.shield = this.maxShield;
+    this.speed = 0;
+    const currentCP = TRACK.checkpoints[this.currentCheckpoint] || TRACK.checkpoints[0];
+    this.x = currentCP.x + (Math.random() - 0.5) * 60;
+    this.y = currentCP.y + (Math.random() - 0.5) * 60;
+  }
+
+  update(room) {
+    if (this.health <= 0) return;
+
+    if (this.isBot) {
+      this.updateBotAI(room);
+    }
+
+    // --- ACCELERATION & REVERSE ---
+    let currentMax = this.maxSpeed;
+    let currentAccel = this.accel;
+
+    // Nitro Boost
+    if (this.inputs.boost && this.nitro > 0) {
+      this.isBoosting = true;
+      this.nitro = Math.max(0, this.nitro - 1.2);
+      currentMax *= 1.45;
+      currentAccel *= 1.8;
+    } else {
+      this.isBoosting = false;
+      this.nitro = Math.min(this.maxNitro, this.nitro + 0.2); // Passive nitro regen
+    }
+
+    if (this.inputs.up) {
+      this.speed = Math.min(currentMax, this.speed + currentAccel);
+    } else if (this.inputs.down) {
+      this.speed = Math.max(this.reverseMaxSpeed, this.speed - currentAccel * 0.8);
+    } else {
+      // Natural drag / friction
+      if (this.speed > 0) {
+        this.speed = Math.max(0, this.speed - this.decel);
+      } else if (this.speed < 0) {
+        this.speed = Math.min(0, this.speed + this.decel);
+      }
+    }
+
+    // --- STEERING & DRIFTING ---
+    let turnRate = this.handling * (Math.abs(this.speed) / this.maxSpeed + 0.3);
+    if (this.inputs.drift && Math.abs(this.speed) > 4) {
+      this.isDrifting = true;
+      turnRate *= 1.4;
+      this.speed *= 0.985; // Slight drift friction
+    } else {
+      this.isDrifting = false;
+    }
+
+    if (this.inputs.left) {
+      this.angle -= turnRate * (this.speed >= 0 ? 1 : -1);
+    }
+    if (this.inputs.right) {
+      this.angle += turnRate * (this.speed >= 0 ? 1 : -1);
+    }
+
+    // Move Car
+    this.x += Math.cos(this.angle) * this.speed;
+    this.y += Math.sin(this.angle) * this.speed;
+
+    // Boundary constraints
+    this.x = Math.max(80, Math.min(TRACK.width - 80, this.x));
+    this.y = Math.max(80, Math.min(TRACK.height - 80, this.y));
+
+    // Obstacle Wall Collisions
+    TRACK.obstacles.forEach(obs => {
+      if (
+        this.x > obs.x &&
+        this.x < obs.x + obs.w &&
+        this.y > obs.y &&
+        this.y < obs.y + obs.h
+      ) {
+        // Bounce back
+        this.speed = -this.speed * 0.5;
+        this.x -= Math.cos(this.angle) * 8;
+        this.y -= Math.sin(this.angle) * 8;
+        this.takeDamage(5, null, room);
+      }
+    });
+
+    // Boost Pad Collisions
+    TRACK.boostPads.forEach(pad => {
+      const dx = this.x - pad.x;
+      const dy = this.y - pad.y;
+      if (Math.abs(dx) < 60 && Math.abs(dy) < 60) {
+        this.speed = this.maxSpeed * 1.6;
+        this.nitro = Math.min(this.maxNitro, this.nitro + 20);
+      }
+    });
+
+    // Checkpoint & Lap Progress
+    const targetCP = TRACK.checkpoints[this.currentCheckpoint];
+    if (targetCP) {
+      const distToCP = Math.hypot(this.x - targetCP.x, this.y - targetCP.y);
+      if (distToCP < targetCP.radius) {
+        this.currentCheckpoint++;
+        if (this.currentCheckpoint >= TRACK.checkpoints.length) {
+          this.currentCheckpoint = 0;
+          this.lap++;
+          if (this.lap > this.maxLaps && !this.finished) {
+            this.finished = true;
+            this.finishTime = Date.now() - room.gameStartTime;
+            room.checkGameCompletion();
+          }
+        }
+      }
+    }
+
+    // Shooting Action
+    if (this.inputs.shoot && Date.now() - this.lastShotTime > 180) {
+      this.fireWeapon(room);
+    }
+  }
+
+  updateBotAI(room) {
+    const targetCP = TRACK.checkpoints[this.botTargetCheckpoint];
+    if (targetCP) {
+      const targetAngle = Math.atan2(targetCP.y - this.y, targetCP.x - this.x);
+      let diffAngle = targetAngle - this.angle;
+      while (diffAngle < -Math.PI) diffAngle += Math.PI * 2;
+      while (diffAngle > Math.PI) diffAngle -= Math.PI * 2;
+
+      this.inputs.up = true;
+      this.inputs.left = diffAngle < -0.15;
+      this.inputs.right = diffAngle > 0.15;
+      this.inputs.boost = Math.abs(diffAngle) < 0.2 && Math.random() > 0.4;
+      this.inputs.drift = Math.abs(diffAngle) > 0.8;
+
+      const dist = Math.hypot(targetCP.x - this.x, targetCP.y - this.y);
+      if (dist < 200) {
+        this.botTargetCheckpoint = (this.botTargetCheckpoint + 1) % TRACK.checkpoints.length;
+      }
+    }
+
+    // Bot Auto-Shoot at closest opponent
+    if (Date.now() > this.botShootCooldown) {
+      let closestOpponent = null;
+      let closestDist = 500;
+      room.cars.forEach(other => {
+        if (other.id !== this.id && other.health > 0) {
+          const d = Math.hypot(other.x - this.x, other.y - this.y);
+          if (d < closestDist) {
+            closestDist = d;
+            closestOpponent = other;
+          }
+        }
+      });
+
+      if (closestOpponent) {
+        const oppAngle = Math.atan2(closestOpponent.y - this.y, closestOpponent.x - this.x);
+        let angleDiff = oppAngle - this.angle;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+
+        if (Math.abs(angleDiff) < 0.35) {
+          this.inputs.shoot = true;
+          this.botShootCooldown = Date.now() + 600 + Math.random() * 800;
+        } else {
+          this.inputs.shoot = false;
+        }
+      }
+    }
+  }
+
+  fireWeapon(room) {
+    this.lastShotTime = Date.now();
+    const muzzleX = this.x + Math.cos(this.angle) * (this.width / 2 + 5);
+    const muzzleY = this.y + Math.sin(this.angle) * (this.width / 2 + 5);
+
+    if (this.weaponType === 'rocket' && this.specialAmmo > 0) {
+      this.specialAmmo--;
+      room.projectiles.push(new Projectile(this.id, muzzleX, muzzleY, this.angle, 'rocket', 18, 45, this.color));
+      if (this.specialAmmo <= 0) this.weaponType = 'gatling';
+    } else if (this.weaponType === 'laser' && this.specialAmmo > 0) {
+      this.specialAmmo--;
+      room.projectiles.push(new Projectile(this.id, muzzleX, muzzleY, this.angle, 'laser', 26, 60, '#ff007f'));
+      if (this.specialAmmo <= 0) this.weaponType = 'gatling';
+    } else if (this.weaponType === 'mine' && this.specialAmmo > 0) {
+      this.specialAmmo--;
+      const rearX = this.x - Math.cos(this.angle) * 30;
+      const rearY = this.y - Math.sin(this.angle) * 30;
+      room.projectiles.push(new Projectile(this.id, rearX, rearY, 0, 'mine', 0, 75, '#ffb703'));
+      if (this.specialAmmo <= 0) this.weaponType = 'gatling';
+    } else {
+      // Standard Plasma Gatling
+      room.projectiles.push(new Projectile(this.id, muzzleX, muzzleY, this.angle + (Math.random() - 0.5) * 0.08, 'bullet', 22, 12, this.color));
+    }
+
+    room.events.push({ type: 'shoot', x: muzzleX, y: muzzleY, weapon: this.weaponType, color: this.color });
+  }
+
+  takeDamage(amount, attackerId, room) {
+    if (this.health <= 0) return;
+
+    if (this.shield > 0) {
+      const remaining = amount - this.shield;
+      this.shield = Math.max(0, this.shield - amount);
+      if (remaining > 0) {
+        this.health = Math.max(0, this.health - remaining);
+      }
+    } else {
+      this.health = Math.max(0, this.health - amount);
+    }
+
+    room.events.push({ type: 'hit', x: this.x, y: this.y, amount });
+
+    if (this.health <= 0) {
+      this.deaths++;
+      if (attackerId) {
+        const attacker = room.cars.get(attackerId);
+        if (attacker) {
+          attacker.kills++;
+          attacker.score += 500;
+          room.events.push({
+            type: 'kill',
+            killerName: attacker.name,
+            victimName: this.name,
+            weapon: attacker.weaponType
+          });
+        }
+      }
+      room.events.push({ type: 'explosion', x: this.x, y: this.y });
+
+      // Respawn after 2.5 seconds
+      setTimeout(() => {
+        if (room.state === 'PLAYING') {
+          this.respawn();
+        }
+      }, 2500);
+    }
+  }
+}
+
+// Projectile Class
+class Projectile {
+  constructor(ownerId, x, y, angle, type, speed, damage, color) {
+    this.id = Math.random().toString(36).substr(2, 6);
+    this.ownerId = ownerId;
+    this.x = x;
+    this.y = y;
+    this.angle = angle;
+    this.type = type;
+    this.speed = speed;
+    this.damage = damage;
+    this.color = color || '#00f0ff';
+    this.radius = type === 'mine' ? 14 : (type === 'rocket' ? 8 : 4);
+    this.life = type === 'mine' ? 600 : 90; // frames to live
+    this.createdAt = Date.now();
+  }
+
+  update(room) {
+    this.life--;
+    if (this.life <= 0) return false;
+
+    if (this.type !== 'mine') {
+      this.x += Math.cos(this.angle) * this.speed;
+      this.y += Math.sin(this.angle) * this.speed;
+    }
+
+    // Check Wall Collisions
+    for (const obs of TRACK.obstacles) {
+      if (this.x > obs.x && this.x < obs.x + obs.w && this.y > obs.y && this.y < obs.y + obs.h) {
+        room.events.push({ type: 'explosion', x: this.x, y: this.y, radius: 20 });
+        return false;
+      }
+    }
+
+    // Check Car Collisions
+    for (const car of room.cars.values()) {
+      if (car.id !== this.ownerId && car.health > 0) {
+        const dist = Math.hypot(car.x - this.x, car.y - this.y);
+        if (dist < car.width / 2 + this.radius) {
+          car.takeDamage(this.damage, this.ownerId, room);
+          car.speed *= 0.6; // Impact knockback / stun
+          room.events.push({ type: 'explosion', x: this.x, y: this.y, radius: this.type === 'rocket' ? 40 : 15 });
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+}
+
+// Powerup Spawner Manager
+class PowerupItem {
+  constructor(x, y, type) {
+    this.x = x;
+    this.y = y;
+    this.type = type; // 'rocket', 'laser', 'nitro', 'shield', 'repair', 'mine'
+    this.active = true;
+    this.respawnTimer = 0;
+  }
+
+  collect(car) {
+    this.active = false;
+    this.respawnTimer = 600; // 10 seconds at 60fps
+
+    switch (this.type) {
+      case 'rocket':
+        car.weaponType = 'rocket';
+        car.specialAmmo = 4;
+        break;
+      case 'laser':
+        car.weaponType = 'laser';
+        car.specialAmmo = 5;
+        break;
+      case 'mine':
+        car.weaponType = 'mine';
+        car.specialAmmo = 3;
+        break;
+      case 'nitro':
+        car.nitro = car.maxNitro;
+        break;
+      case 'shield':
+        car.shield = car.maxShield;
+        break;
+      case 'repair':
+        car.health = Math.min(car.maxHealth, car.health + 50);
+        break;
+    }
+  }
+}
+
+// Game Room Management
 class GameRoom {
   constructor(code, hostSocketId) {
     this.code = code;
     this.hostId = hostSocketId;
-    this.players = new Map(); // socketId -> PlayerData
-    this.state = 'LOBBY'; // LOBBY, BLUEPRINT, PITCH, SHOWCASE, VOTING, AUCTION, REVEAL, GAMEOVER
-    this.roundNumber = 0;
-    this.maxRounds = 3;
-    this.timer = null;
-    this.timeLeft = 0;
-    this.currentInvention = null;
-    this.imposterIds = [];
-    this.pitches = new Map(); // playerId -> { pitchText, submittedAt }
-    this.votes = new Map(); // voterId -> targetPlayerId
-    this.auction = {
-      active: false,
-      currentBid: 0,
-      highestBidderId: null,
-      passedPlayers: new Set(),
-      timer: 15
-    };
-    this.createdAt = Date.now();
+    this.state = 'LOBBY'; // LOBBY, COUNTDOWN, PLAYING, GAMEOVER
+    this.gameMode = 'DEATH_RACE'; // 'DEATH_RACE' or 'DEMOLITION_ARENA'
+    this.cars = new Map();
+    this.projectiles = [];
+    this.powerups = TRACK.powerupSpawns.map(p => new PowerupItem(p.x, p.y, p.type));
+    this.events = [];
+    this.gameStartTime = 0;
+    this.gameLoopInterval = null;
+    this.countdown = 3;
   }
 
-  addPlayer(socketId, name, avatar, isHost = false, isBot = false) {
-    const player = {
-      id: socketId,
-      name: name || `Player_${this.players.size + 1}`,
-      avatar: avatar || '🧑‍🚀',
-      score: 0,
-      cash: 10000,
-      isHost: isHost,
-      isBot: isBot,
-      isReady: isBot,
-      isImposter: false,
-      connected: true,
-      lastPitch: '',
-      inventory: []
-    };
-    this.players.set(socketId, player);
-    return player;
+  addPlayer(id, name, color, isHost = false, isBot = false) {
+    const spawnIndex = this.cars.size;
+    const car = new CombatCar(id, name, color, isHost, isBot, spawnIndex);
+    this.cars.set(id, car);
+    return car;
   }
 
-  removePlayer(socketId) {
-    this.players.delete(socketId);
-    if (this.hostId === socketId) {
-      // Reassign host if players remain
-      const nextPlayer = Array.from(this.players.values()).find(p => !p.isBot);
-      if (nextPlayer) {
-        this.hostId = nextPlayer.id;
-        nextPlayer.isHost = true;
+  removePlayer(id) {
+    this.cars.delete(id);
+    if (this.hostId === id) {
+      const next = Array.from(this.cars.values()).find(c => !c.isBot);
+      if (next) {
+        this.hostId = next.id;
+        next.isHost = true;
       }
     }
   }
 
-  getPublicState() {
-    return {
-      code: this.code,
-      hostId: this.hostId,
-      state: this.state,
-      roundNumber: this.roundNumber,
-      maxRounds: this.maxRounds,
-      timeLeft: this.timeLeft,
-      currentInvention: this.currentInvention ? {
-        id: this.currentInvention.id,
-        title: this.currentInvention.title,
-        category: this.currentInvention.category,
-        baseValue: this.currentInvention.baseValue,
-        tags: this.currentInvention.tags
-      } : null,
-      players: Array.from(this.players.values()).map(p => ({
-        id: p.id,
-        name: p.name,
-        avatar: p.avatar,
-        score: p.score,
-        cash: p.cash,
-        isHost: p.isHost,
-        isBot: p.isBot,
-        isReady: p.isReady,
-        hasSubmittedPitch: this.pitches.has(p.id),
-        hasVoted: this.votes.has(p.id),
-        inventoryCount: p.inventory.length
-      })),
-      pitches: Array.from(this.pitches.entries()).map(([playerId, data]) => {
-        const player = this.players.get(playerId);
-        return {
-          playerId,
-          playerName: player ? player.name : 'Unknown',
-          playerAvatar: player ? player.avatar : '❓',
-          pitchText: data.pitchText
-        };
-      }),
-      auction: {
-        currentBid: this.auction.currentBid,
-        highestBidderId: this.auction.highestBidderId,
-        highestBidderName: this.auction.highestBidderId && this.players.get(this.auction.highestBidderId) 
-          ? this.players.get(this.auction.highestBidderId).name 
-          : 'None',
-        passedCount: this.auction.passedPlayers.size,
-        totalBidders: this.players.size
+  startGame(io) {
+    this.state = 'COUNTDOWN';
+    this.countdown = 3;
+    this.projectiles = [];
+    this.events = [];
+
+    // Reset cars to starting grid
+    let idx = 0;
+    this.cars.forEach(car => {
+      car.health = car.maxHealth;
+      car.shield = car.maxShield;
+      car.nitro = car.maxNitro;
+      car.lap = 1;
+      car.currentCheckpoint = 0;
+      car.finished = false;
+      car.score = 0;
+      car.kills = 0;
+      car.deaths = 0;
+      car.x = 250 + (idx % 2) * 80;
+      car.y = 320 + Math.floor(idx / 2) * 90;
+      car.angle = 0;
+      car.speed = 0;
+      idx++;
+    });
+
+    io.to(this.code).emit('countdown_start', { countdown: this.countdown });
+
+    const countInterval = setInterval(() => {
+      this.countdown--;
+      io.to(this.code).emit('countdown_tick', { countdown: this.countdown });
+      if (this.countdown <= 0) {
+        clearInterval(countInterval);
+        this.state = 'PLAYING';
+        this.gameStartTime = Date.now();
+        this.runGameLoop(io);
       }
-    };
+    }, 1000);
   }
 
-  startNextRound(io) {
-    this.roundNumber++;
-    if (this.roundNumber > this.maxRounds) {
-      this.state = 'GAMEOVER';
-      io.to(this.code).emit('game_state_update', this.getPublicState());
-      return;
-    }
+  runGameLoop(io) {
+    if (this.gameLoopInterval) clearInterval(this.gameLoopInterval);
 
-    // Pick random invention
-    const randomInv = INVENTIONS_DATABASE[Math.floor(Math.random() * INVENTIONS_DATABASE.length)];
-    this.currentInvention = randomInv;
-    this.pitches.clear();
-    this.votes.clear();
-
-    // Select Imposter
-    const playerList = Array.from(this.players.values());
-    playerList.forEach(p => p.isImposter = false);
-
-    const imposterCount = playerList.length >= 7 ? 2 : 1;
-    const shuffled = [...playerList].sort(() => 0.5 - Math.random());
-    this.imposterIds = shuffled.slice(0, imposterCount).map(p => p.id);
-    this.imposterIds.forEach(id => {
-      const p = this.players.get(id);
-      if (p) p.isImposter = true;
-    });
-
-    // Move to BLUEPRINT state
-    this.state = 'BLUEPRINT';
-    this.timeLeft = 12;
-
-    // Send secret personalized blueprint to each player
-    playerList.forEach(p => {
-      if (p.isImposter) {
-        io.to(p.id).emit('secret_role_assigned', {
-          isImposter: true,
-          roleTitle: '🕵️ SECRET CHOR / IMPOSTER',
-          prompt: randomInv.imposterPrompt,
-          titleHint: randomInv.category,
-          baseValue: randomInv.baseValue
-        });
-      } else {
-        io.to(p.id).emit('secret_role_assigned', {
-          isImposter: false,
-          roleTitle: '💡 MASTER INVENTOR',
-          title: randomInv.title,
-          description: randomInv.realDescription,
-          category: randomInv.category,
-          baseValue: randomInv.baseValue
-        });
-      }
-    });
-
-    io.to(this.code).emit('game_state_update', this.getPublicState());
-
-    this.runTimer(io, 12, () => {
-      this.startPitchPhase(io);
-    });
-  }
-
-  startPitchPhase(io) {
-    this.state = 'PITCH';
-    this.timeLeft = 35;
-    io.to(this.code).emit('game_state_update', this.getPublicState());
-
-    // Trigger AI bots to auto-generate funny pitches
-    this.players.forEach(p => {
-      if (p.isBot) {
-        setTimeout(() => {
-          let botPitch = '';
-          if (p.isImposter) {
-            const fakePitches = [
-              'Trust me bro, this device uses supersonic quantum vibes to solve all your problems in 3 seconds flat!',
-              'Guaranteed 1000% satisfaction or I will personally refund your grandmother!',
-              'This is the top viral gadget on the internet right now, buy it before Sharma Ji buys all stock!',
-              'Engineered with pure desi genius and zero bugs. Ready to dominate Shark Tank!'
-            ];
-            botPitch = fakePitches[Math.floor(Math.random() * fakePitches.length)];
-          } else {
-            const realPitches = [
-              `Our ${this.currentInvention.title} changes everything. Never worry again!`,
-              `Say goodbye to daily stress with the certified ${this.currentInvention.title}!`,
-              `Why suffer in silence when you can automate bliss with our patented ${this.currentInvention.tags[0]} tech?`,
-              `Limited production run for the smartest minds in town. Get yours now!`
-            ];
-            botPitch = realPitches[Math.floor(Math.random() * realPitches.length)];
-          }
-          this.pitches.set(p.id, { pitchText: botPitch, submittedAt: Date.now() });
-          io.to(this.code).emit('game_state_update', this.getPublicState());
-        }, 3000 + Math.random() * 4000);
-      }
-    });
-
-    this.runTimer(io, 35, () => {
-      this.startShowcasePhase(io);
-    });
-  }
-
-  startShowcasePhase(io) {
-    this.state = 'SHOWCASE';
-    this.timeLeft = 18;
-    io.to(this.code).emit('game_state_update', this.getPublicState());
-
-    this.runTimer(io, 18, () => {
-      this.startVotingPhase(io);
-    });
-  }
-
-  startVotingPhase(io) {
-    this.state = 'VOTING';
-    this.timeLeft = 25;
-    this.votes.clear();
-    io.to(this.code).emit('game_state_update', this.getPublicState());
-
-    // AI bot voting
-    this.players.forEach(p => {
-      if (p.isBot) {
-        setTimeout(() => {
-          const candidateList = Array.from(this.players.values()).filter(cand => cand.id !== p.id);
-          if (candidateList.length > 0) {
-            const randomTarget = candidateList[Math.floor(Math.random() * candidateList.length)];
-            this.votes.set(p.id, randomTarget.id);
-            io.to(this.code).emit('game_state_update', this.getPublicState());
-          }
-        }, 3000 + Math.random() * 5000);
-      }
-    });
-
-    this.runTimer(io, 25, () => {
-      this.startAuctionPhase(io);
-    });
-  }
-
-  startAuctionPhase(io) {
-    this.state = 'AUCTION';
-    this.auction = {
-      active: true,
-      currentBid: this.currentInvention.baseValue,
-      highestBidderId: null,
-      passedPlayers: new Set(),
-      timer: 15
-    };
-    this.timeLeft = 15;
-    io.to(this.code).emit('game_state_update', this.getPublicState());
-
-    // AI Bot Bidding Behavior
-    this.triggerBotAuctionLoop(io);
-
-    this.runAuctionTimer(io);
-  }
-
-  triggerBotAuctionLoop(io) {
-    if (this.state !== 'AUCTION') return;
-    this.players.forEach(p => {
-      if (p.isBot && !this.auction.passedPlayers.has(p.id)) {
-        const shouldBid = Math.random() > 0.45 && p.cash > this.auction.currentBid + 500;
-        if (shouldBid) {
-          setTimeout(() => {
-            if (this.state === 'AUCTION' && !this.auction.passedPlayers.has(p.id)) {
-              this.handleBid(p.id, 500, io);
-            }
-          }, 2000 + Math.random() * 4000);
-        } else if (Math.random() > 0.7) {
-          this.auction.passedPlayers.add(p.id);
-          io.to(this.code).emit('game_state_update', this.getPublicState());
-        }
-      }
-    });
-  }
-
-  handleBid(playerId, increment, io) {
-    const player = this.players.get(playerId);
-    if (!player || this.state !== 'AUCTION') return false;
-    const newBid = this.auction.currentBid + increment;
-    if (player.cash >= newBid) {
-      this.auction.currentBid = newBid;
-      this.auction.highestBidderId = playerId;
-      this.auction.timer = Math.max(8, this.auction.timer + 3); // Reset auction timer slightly on bids
-      this.timeLeft = this.auction.timer;
-      io.to(this.code).emit('bid_placed', {
-        playerName: player.name,
-        playerAvatar: player.avatar,
-        amount: newBid
-      });
-      io.to(this.code).emit('game_state_update', this.getPublicState());
-      return true;
-    }
-    return false;
-  }
-
-  runAuctionTimer(io) {
-    if (this.timer) clearInterval(this.timer);
-    this.timer = setInterval(() => {
-      this.auction.timer--;
-      this.timeLeft = this.auction.timer;
-
-      // Check if all players passed or timer is 0
-      const activeBidders = Array.from(this.players.keys()).filter(id => !this.auction.passedPlayers.has(id));
-      if (this.auction.timer <= 0 || (activeBidders.length <= 1 && this.auction.highestBidderId)) {
-        clearInterval(this.timer);
-        this.finishRoundReveal(io);
+    this.gameLoopInterval = setInterval(() => {
+      if (this.state !== 'PLAYING') {
+        clearInterval(this.gameLoopInterval);
         return;
       }
 
-      io.to(this.code).emit('timer_tick', { timeLeft: this.timeLeft });
-    }, 1000);
-  }
+      // Update Cars
+      this.cars.forEach(car => car.update(this));
 
-  finishRoundReveal(io) {
-    this.state = 'REVEAL';
-    this.timeLeft = 15;
+      // Update Projectiles
+      this.projectiles = this.projectiles.filter(proj => proj.update(this));
 
-    // 1. Calculate Voting Results (Did players catch the Imposter?)
-    const voteCounts = new Map(); // targetId -> count
-    this.votes.forEach((targetId) => {
-      voteCounts.set(targetId, (voteCounts.get(targetId) || 0) + 1);
-    });
-
-    let mostVotedId = null;
-    let maxVotes = 0;
-    voteCounts.forEach((count, targetId) => {
-      if (count > maxVotes) {
-        maxVotes = count;
-        mostVotedId = targetId;
-      }
-    });
-
-    const imposterCaught = this.imposterIds.includes(mostVotedId);
-    const roundResults = {
-      imposterIds: this.imposterIds,
-      imposters: this.imposterIds.map(id => this.players.get(id)).filter(Boolean),
-      mostVotedPlayer: mostVotedId ? this.players.get(mostVotedId) : null,
-      imposterCaught: imposterCaught,
-      auctionWinner: this.auction.highestBidderId ? this.players.get(this.auction.highestBidderId) : null,
-      winningBid: this.auction.currentBid,
-      invention: this.currentInvention,
-      scoreDeltas: {}
-    };
-
-    // Award Points
-    this.players.forEach(p => {
-      let delta = 0;
-      if (p.isImposter) {
-        if (!imposterCaught) {
-          delta += 1500; // Imposter fooled everyone!
-          p.cash += 3000;
+      // Update Powerups
+      this.powerups.forEach(p => {
+        if (!p.active) {
+          p.respawnTimer--;
+          if (p.respawnTimer <= 0) p.active = true;
         } else {
-          delta += 300; // Consolation
+          // Check collision with cars
+          for (const car of this.cars.values()) {
+            if (car.health > 0 && Math.hypot(car.x - p.x, car.y - p.y) < 35) {
+              p.collect(car);
+              this.events.push({ type: 'powerup', x: p.x, y: p.y, powerType: p.type, playerId: car.id });
+              break;
+            }
+          }
         }
-      } else {
-        // Honest players who correctly voted for an imposter get points
-        const votedFor = this.votes.get(p.id);
-        if (votedFor && this.imposterIds.includes(votedFor)) {
-          delta += 800; // Detective bonus
-          p.cash += 1000;
-        }
-      }
+      });
 
-      // Pitch bonus if submitted
-      if (this.pitches.has(p.id)) {
-        delta += 200;
-      }
+      // Broadcast Snapshot at 30-60Hz
+      const snapshot = this.getSnapshot();
+      io.to(this.code).emit('game_tick', snapshot);
+      this.events = []; // Flush frame events
+    }, 1000 / 45); // 45 FPS authoritative tick
+  }
 
-      p.score += delta;
-      roundResults.scoreDeltas[p.id] = delta;
-    });
-
-    // Deduct auction cash and award item to winning bidder
-    if (this.auction.highestBidderId) {
-      const winner = this.players.get(this.auction.highestBidderId);
-      if (winner && winner.cash >= this.auction.currentBid) {
-        winner.cash -= this.auction.currentBid;
-        winner.score += Math.floor(this.currentInvention.baseValue * 0.5);
-        winner.inventory.push(this.currentInvention.title);
-      }
+  checkGameCompletion() {
+    const finishedCount = Array.from(this.cars.values()).filter(c => c.finished).length;
+    if (finishedCount >= 1 && this.cars.size <= 2 || finishedCount >= Math.ceil(this.cars.size * 0.7)) {
+      this.state = 'GAMEOVER';
+      if (this.gameLoopInterval) clearInterval(this.gameLoopInterval);
+      io.to(this.code).emit('game_over', this.getLeaderboard());
     }
-
-    io.to(this.code).emit('round_reveal_data', roundResults);
-    io.to(this.code).emit('game_state_update', this.getPublicState());
-
-    this.runTimer(io, 15, () => {
-      if (this.roundNumber >= this.maxRounds) {
-        this.state = 'GAMEOVER';
-        io.to(this.code).emit('game_state_update', this.getPublicState());
-      } else {
-        this.startNextRound(io);
-      }
-    });
   }
 
-  runTimer(io, seconds, callback) {
-    if (this.timer) clearInterval(this.timer);
-    this.timeLeft = seconds;
-    this.timer = setInterval(() => {
-      this.timeLeft--;
-      io.to(this.code).emit('timer_tick', { timeLeft: this.timeLeft });
-      if (this.timeLeft <= 0) {
-        clearInterval(this.timer);
-        callback();
-      }
-    }, 1000);
+  getSnapshot() {
+    return {
+      state: this.state,
+      cars: Array.from(this.cars.values()).map(c => ({
+        id: c.id,
+        name: c.name,
+        color: c.color,
+        x: Math.round(c.x),
+        y: Math.round(c.y),
+        angle: Number(c.angle.toFixed(3)),
+        speed: Number(c.speed.toFixed(1)),
+        health: Math.round(c.health),
+        shield: Math.round(c.shield),
+        nitro: Math.round(c.nitro),
+        isBoosting: c.isBoosting,
+        isDrifting: c.isDrifting,
+        weaponType: c.weaponType,
+        specialAmmo: c.specialAmmo,
+        lap: c.lap,
+        currentCheckpoint: c.currentCheckpoint,
+        kills: c.kills,
+        finished: c.finished
+      })),
+      projectiles: this.projectiles.map(p => ({
+        id: p.id,
+        x: Math.round(p.x),
+        y: Math.round(p.y),
+        angle: Number(p.angle.toFixed(2)),
+        type: p.type,
+        color: p.color
+      })),
+      powerups: this.powerups.map(p => ({
+        x: p.x,
+        y: p.y,
+        type: p.type,
+        active: p.active
+      })),
+      events: this.events
+    };
   }
 
-  resetGame() {
-    if (this.timer) clearInterval(this.timer);
-    this.state = 'LOBBY';
-    this.roundNumber = 0;
-    this.pitches.clear();
-    this.votes.clear();
-    this.players.forEach(p => {
-      p.score = 0;
-      p.cash = 10000;
-      p.isImposter = false;
-      p.inventory = [];
-    });
+  getLeaderboard() {
+    return Array.from(this.cars.values())
+      .sort((a, b) => {
+        if (a.finished && !b.finished) return -1;
+        if (!a.finished && b.finished) return 1;
+        if (a.finished && b.finished) return a.finishTime - b.finishTime;
+        if (a.lap !== b.lap) return b.lap - a.lap;
+        if (a.currentCheckpoint !== b.currentCheckpoint) return b.currentCheckpoint - a.currentCheckpoint;
+        return b.kills - a.kills;
+      })
+      .map((c, rank) => ({
+        rank: rank + 1,
+        id: c.id,
+        name: c.name,
+        color: c.color,
+        kills: c.kills,
+        lap: c.lap,
+        finishTime: c.finishTime ? (c.finishTime / 1000).toFixed(2) + 's' : 'DNF'
+      }));
   }
 }
 
-// --- SOCKET.IO EVENT HANDLERS ---
+// Socket IO Handlers
 io.on('connection', (socket) => {
   let currentRoomCode = null;
 
-  // 1. Create Room (Host)
-  socket.on('create_room', ({ hostName, avatar }) => {
+  socket.on('create_room', ({ playerName, carColor }) => {
     const code = generateRoomCode();
     const room = new GameRoom(code, socket.id);
     rooms.set(code, room);
     currentRoomCode = code;
 
     socket.join(code);
-    const hostPlayer = room.addPlayer(socket.id, hostName || 'Host', avatar || '👑', true);
+    const car = room.addPlayer(socket.id, playerName || 'Player 1', carColor || '#00f0ff', true);
 
     socket.emit('room_created', {
       roomCode: code,
-      player: hostPlayer,
-      state: room.getPublicState()
+      player: { id: car.id, name: car.name, color: car.color, isHost: true },
+      track: TRACK
     });
   });
 
-  // 2. Join Room (Player on mobile or PC)
-  socket.on('join_room', ({ roomCode, playerName, avatar }) => {
+  socket.on('join_room', ({ roomCode, playerName, carColor }) => {
     const cleanCode = (roomCode || '').toUpperCase().trim();
     const room = rooms.get(cleanCode);
 
     if (!room) {
-      socket.emit('join_error', { message: 'Invalid Room Code. Please check and try again.' });
+      socket.emit('join_error', { message: 'Invalid Room Code! Please check and try again.' });
       return;
     }
 
     if (room.state !== 'LOBBY') {
-      socket.emit('join_error', { message: 'Game already in progress. Please wait for next session.' });
+      socket.emit('join_error', { message: 'Battle already in progress! Please wait for next race.' });
       return;
     }
 
     currentRoomCode = cleanCode;
     socket.join(cleanCode);
-    const player = room.addPlayer(socket.id, playerName, avatar, false);
+    const car = room.addPlayer(socket.id, playerName || `Racer_${room.cars.size + 1}`, carColor || '#ff007f', false);
 
     socket.emit('room_joined', {
       roomCode: cleanCode,
-      player: player,
-      state: room.getPublicState()
+      player: { id: car.id, name: car.name, color: car.color, isHost: false },
+      track: TRACK
     });
 
-    io.to(cleanCode).emit('player_joined', {
-      player: player,
-      state: room.getPublicState()
+    io.to(cleanCode).emit('player_joined_lobby', {
+      players: Array.from(room.cars.values()).map(c => ({ id: c.id, name: c.name, color: c.color, isBot: c.isBot, isHost: c.isHost }))
     });
   });
 
-  // 3. Add AI Bot (Great for testing or filling rooms)
   socket.on('add_bot', () => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room || room.hostId !== socket.id || room.state !== 'LOBBY') return;
 
-    const availableBots = AI_BOT_PROFILES.filter(b => 
-      !Array.from(room.players.values()).some(p => p.name === b.name)
-    );
+    const botNames = ['CyberViper', 'NeonBlaze', 'DoomBuggy', 'PlasmaPhantom', 'TurboTitan'];
+    const botColors = ['#ff3366', '#ffb703', '#00f59b', '#b5179e', '#7209b7'];
+    const botIdx = room.cars.size;
+    const name = botNames[botIdx % botNames.length];
+    const color = botColors[botIdx % botColors.length];
 
-    if (availableBots.length === 0) return;
-    const botProfile = availableBots[Math.floor(Math.random() * availableBots.length)];
-    const botId = `bot_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
-    
-    const botPlayer = room.addPlayer(botId, botProfile.name, botProfile.avatar, false, true);
-    io.to(currentRoomCode).emit('player_joined', {
-      player: botPlayer,
-      state: room.getPublicState()
+    room.addPlayer(`bot_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`, `🤖 ${name}`, color, false, true);
+
+    io.to(currentRoomCode).emit('player_joined_lobby', {
+      players: Array.from(room.cars.values()).map(c => ({ id: c.id, name: c.name, color: c.color, isBot: c.isBot, isHost: c.isHost }))
     });
   });
 
-  // 4. Start Game
   socket.on('start_game', () => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room || room.hostId !== socket.id) return;
-
-    if (room.players.size < 2) {
-      socket.emit('game_error', { message: 'Need at least 2 players to start! Add an AI Bot or invite a friend.' });
-      return;
-    }
-
-    room.startNextRound(io);
+    room.startGame(io);
   });
 
-  // 5. Submit Pitch
-  socket.on('submit_pitch', ({ pitchText }) => {
-    if (!currentRoomCode) return;
-    const room = rooms.get(currentRoomCode);
-    if (!room || room.state !== 'PITCH') return;
-
-    const cleanText = (pitchText || '').trim().slice(0, 160);
-    if (!cleanText) return;
-
-    room.pitches.set(socket.id, {
-      pitchText: cleanText,
-      submittedAt: Date.now()
-    });
-
-    io.to(currentRoomCode).emit('pitch_submitted', {
-      playerId: socket.id,
-      state: room.getPublicState()
-    });
-
-    // If all human players submitted, accelerate to showcase
-    const totalPitches = room.pitches.size;
-    if (totalPitches >= room.players.size) {
-      if (room.timer) clearInterval(room.timer);
-      room.startShowcasePhase(io);
-    }
-  });
-
-  // 6. Live Reaction Emojis
-  socket.on('send_reaction', ({ emoji }) => {
+  socket.on('player_input', (inputs) => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room) return;
-    const player = room.players.get(socket.id);
-    
-    io.to(currentRoomCode).emit('floating_reaction', {
-      emoji: emoji || '🔥',
-      senderName: player ? player.name : 'Audience',
-      id: Math.random()
-    });
-  });
-
-  // 7. Submit Vote
-  socket.on('submit_vote', ({ targetPlayerId }) => {
-    if (!currentRoomCode) return;
-    const room = rooms.get(currentRoomCode);
-    if (!room || room.state !== 'VOTING') return;
-
-    room.votes.set(socket.id, targetPlayerId);
-    io.to(currentRoomCode).emit('vote_recorded', {
-      voterId: socket.id,
-      state: room.getPublicState()
-    });
-
-    if (room.votes.size >= room.players.size) {
-      if (room.timer) clearInterval(room.timer);
-      room.startAuctionPhase(io);
+    const car = room.cars.get(socket.id);
+    if (car) {
+      car.inputs = { ...car.inputs, ...inputs };
     }
   });
 
-  // 8. Place Bid
-  socket.on('place_bid', ({ increment }) => {
-    if (!currentRoomCode) return;
-    const room = rooms.get(currentRoomCode);
-    if (!room || room.state !== 'AUCTION') return;
-
-    const amount = Number(increment) || 500;
-    room.handleBid(socket.id, amount, io);
-  });
-
-  // 9. Pass Bid
-  socket.on('pass_bid', () => {
-    if (!currentRoomCode) return;
-    const room = rooms.get(currentRoomCode);
-    if (!room || room.state !== 'AUCTION') return;
-
-    room.auction.passedPlayers.add(socket.id);
-    io.to(currentRoomCode).emit('player_passed', {
-      playerId: socket.id,
-      state: room.getPublicState()
-    });
-  });
-
-  // 10. Play Again / Restart
-  socket.on('restart_game', () => {
-    if (!currentRoomCode) return;
-    const room = rooms.get(currentRoomCode);
-    if (!room || room.hostId !== socket.id) return;
-
-    room.resetGame();
-    io.to(currentRoomCode).emit('game_restarted', room.getPublicState());
-  });
-
-  // Disconnect
   socket.on('disconnect', () => {
     if (currentRoomCode) {
       const room = rooms.get(currentRoomCode);
       if (room) {
         room.removePlayer(socket.id);
-        if (room.players.size === 0) {
-          if (room.timer) clearInterval(room.timer);
+        if (room.cars.size === 0) {
+          if (room.gameLoopInterval) clearInterval(room.gameLoopInterval);
           rooms.delete(currentRoomCode);
         } else {
-          io.to(currentRoomCode).emit('player_left', {
-            playerId: socket.id,
-            state: room.getPublicState()
+          io.to(currentRoomCode).emit('player_joined_lobby', {
+            players: Array.from(room.cars.values()).map(c => ({ id: c.id, name: c.name, color: c.color, isBot: c.isBot, isHost: c.isHost }))
           });
         }
       }
@@ -757,5 +750,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`🚀 Jugaad Heist server running on port http://localhost:${PORT}`);
+  console.log(`🏎️💥 CYBER NITRO: COMBAT RACER Server running on http://localhost:${PORT}`);
 });

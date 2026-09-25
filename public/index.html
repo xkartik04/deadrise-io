@@ -3,290 +3,218 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Jugaad Heist: The Master Imposter & Auction</title>
-  <meta name="description" content="A fast-paced multiplayer party game of fake inventions, secret imposters, and high-stakes auctions!" />
+  <title>CYBER NITRO: Combat Racing Arena</title>
+  <meta name="description" content="High-octane action multiplayer racing & shooting game! Drift, boost, fire rockets, and blast opponents across the track." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="app-container">
-    <!-- Top Header Bar -->
-    <header id="top-bar">
-      <div class="brand">
-        <span class="brand-badge">🏆 MULTIPLAYER</span>
-        <h1 class="brand-title">JUGAAD HEIST</h1>
-      </div>
-      <div id="game-status-badge" class="hidden">
-        <span id="room-code-tag">ROOM: ----</span>
-        <span id="player-cash-tag">₹10,000</span>
-      </div>
-      <div class="audio-toggle">
-        <button id="sound-btn" title="Toggle Sound">🔊</button>
-      </div>
-    </header>
+  <div id="game-app">
+    
+    <!-- ================= 1. HOME / GARAGE SCREEN ================= -->
+    <section id="screen-home" class="screen active">
+      <div class="home-container">
+        <header class="game-logo">
+          <div class="logo-sub">🔥 ACTION RACING & SHOOTING ARENA 🔥</div>
+          <h1>CYBER NITRO</h1>
+          <div class="logo-tag">MULTI-DEVICE COMBAT COMBAT</div>
+        </header>
 
-    <!-- Floating Live Emoji Reaction Container -->
-    <div id="floating-reaction-container"></div>
+        <div class="garage-card">
+          <div class="car-customizer">
+            <h3>🎨 CHOOSE YOUR COMBAT MACHINE</h3>
+            <div class="color-palette">
+              <button class="color-dot selected" data-color="#00f0ff" style="background:#00f0ff;"></button>
+              <button class="color-dot" data-color="#ff007f" style="background:#ff007f;"></button>
+              <button class="color-dot" data-color="#ffb703" style="background:#ffb703;"></button>
+              <button class="color-dot" data-color="#00f59b" style="background:#00f59b;"></button>
+              <button class="color-dot" data-color="#9d4edd" style="background:#9d4edd;"></button>
+              <button class="color-dot" data-color="#ff3366" style="background:#ff3366;"></button>
+            </div>
 
-    <!-- MAIN VIEWPORT -->
-    <main id="main-view">
-      
-      <!-- ================= 1. HOME SCREEN ================= -->
-      <section id="screen-home" class="screen active">
-        <div class="hero-card glassmorphism">
-          <div class="hero-icon-banner">💡 🕵️ 💰</div>
-          <h2>The Hilarious Imposter & Auction Game</h2>
-          <p class="hero-desc">Pitch bizarre inventions, spot the fake inventor, and win high-stakes auctions!</p>
-
-          <div class="avatar-picker-section">
-            <label>Pick Your Avatar:</label>
-            <div id="avatar-grid" class="avatar-grid">
-              <button type="button" class="avatar-btn selected" data-avatar="🧑‍🚀">🧑‍🚀</button>
-              <button type="button" class="avatar-btn" data-avatar="🕵️‍♂️">🕵️‍♂️</button>
-              <button type="button" class="avatar-btn" data-avatar="🧙‍♂️">🧙‍♂️</button>
-              <button type="button" class="avatar-btn" data-avatar="🤖">🤖</button>
-              <button type="button" class="avatar-btn" data-avatar="🤠">🤠</button>
-              <button type="button" class="avatar-btn" data-avatar="👑">👑</button>
-              <button type="button" class="avatar-btn" data-avatar="☕">☕</button>
-              <button type="button" class="avatar-btn" data-avatar="🚀">🚀</button>
+            <div class="car-preview-box">
+              <canvas id="car-preview-canvas" width="180" height="100"></canvas>
             </div>
           </div>
 
-          <div class="input-group">
-            <label for="player-name-input">Your Name:</label>
-            <input type="text" id="player-name-input" placeholder="e.g. MasterJugaad" maxlength="15" autocomplete="off" />
-          </div>
+          <div class="pilot-form">
+            <label>PILOT CALLSIGN:</label>
+            <input type="text" id="player-name-input" placeholder="e.g. ApexHunter" maxlength="12" autocomplete="off" />
 
-          <div class="action-grid">
-            <div class="join-box">
-              <input type="text" id="join-room-input" placeholder="Enter 4-Letter Code" maxlength="4" autocomplete="off" />
-              <button id="join-game-btn" class="btn btn-primary">🎮 Join Game</button>
-            </div>
-            
-            <div class="divider"><span>OR</span></div>
-            
-            <button id="create-game-btn" class="btn btn-gold">👑 Host New Game (Screen/TV)</button>
-          </div>
-
-          <div class="quick-rules-preview">
-            <span>✨ 2-8+ Players</span>
-            <span>📱 Join via Mobile QR</span>
-            <span>⏱️ 5-Min Rounds</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= 2. LOBBY SCREEN ================= -->
-      <section id="screen-lobby" class="screen">
-        <div class="lobby-layout">
-          <div class="room-info-card glassmorphism">
-            <div class="room-header">
-              <span class="sub-label">ROOM PASSCODE</span>
-              <div class="code-copy-row">
-                <h2 id="lobby-room-code">----</h2>
-                <button id="copy-link-btn" class="btn btn-sm">📋 Copy Link</button>
+            <div class="action-buttons-group">
+              <div class="join-row">
+                <input type="text" id="join-room-input" placeholder="ROOM CODE" maxlength="4" autocomplete="off" />
+                <button id="join-btn" class="btn btn-primary">⚡ JOIN BATTLE</button>
               </div>
-            </div>
-
-            <!-- Mobile Join QR Display -->
-            <div class="qr-container">
-              <canvas id="qr-canvas"></canvas>
-              <p class="qr-hint">Scan with phone camera to join instantly!</p>
-            </div>
-
-            <!-- Host Controls -->
-            <div id="host-controls" class="host-controls hidden">
-              <button id="start-game-btn" class="btn btn-gold btn-large glow-pulse">🚀 Start Game</button>
-              <button id="add-bot-btn" class="btn btn-outline btn-sm">🤖 + Add AI Bot</button>
-            </div>
-            <div id="guest-waiting-msg" class="guest-waiting-msg">
-              <div class="loading-spinner"></div>
-              <p>Waiting for Host to start the game...</p>
-            </div>
-          </div>
-
-          <div class="players-roster-card glassmorphism">
-            <h3>Connected Players (<span id="player-count">0</span>)</h3>
-            <div id="players-roster-list" class="roster-grid">
-              <!-- Player Cards populated dynamically -->
+              <div class="or-divider"><span>OR</span></div>
+              <button id="create-btn" class="btn btn-gold btn-block">👑 HOST NEW MATCH</button>
             </div>
           </div>
         </div>
-      </section>
 
-      <!-- ================= 3. BLUEPRINT SCREEN ================= -->
-      <section id="screen-blueprint" class="screen">
-        <div class="phase-card glassmorphism">
-          <div class="phase-top-bar">
-            <span class="phase-tag">ROUND <span id="round-num-tag">1</span> OF 3</span>
-            <div class="timer-circle" id="blueprint-timer">12</div>
-          </div>
-
-          <div id="role-banner" class="role-banner">
-            <!-- Populated dynamically with SECRET role -->
-          </div>
-
-          <div id="blueprint-content-box" class="blueprint-box">
-            <!-- Populated with Real blueprint or Corrupted Imposter blueprint -->
-          </div>
-
-          <p class="blueprint-instruction">Memorize your details! Pitching begins shortly...</p>
+        <div class="controls-guide">
+          <span>⌨️ <strong>DESKTOP:</strong> WASD / Arrows = Drive | <strong>SPACE</strong> = Shoot | <strong>SHIFT</strong> = Nitro Boost | <strong>E</strong> = Drift</span>
+          <span>📱 <strong>MOBILE:</strong> Virtual Steering + On-Screen Fire & Nitro Pedals</span>
         </div>
-      </section>
-
-      <!-- ================= 4. PITCH SUBMISSION SCREEN ================= -->
-      <section id="screen-pitch" class="screen">
-        <div class="phase-card glassmorphism">
-          <div class="phase-top-bar">
-            <span class="phase-tag">PHASE: THE PITCH</span>
-            <div class="timer-circle" id="pitch-timer">35</div>
-          </div>
-
-          <div class="pitch-prompt-header">
-            <h2 id="pitch-invention-title">Invention Name</h2>
-            <p id="pitch-invention-hint" class="hint-text">Craft a punchy 1-liner slogan or pitch to impress the investors!</p>
-          </div>
-
-          <div id="pitch-form-container">
-            <textarea id="pitch-input" placeholder="Type your 1-line genius pitch here... (e.g., '100% money back if your chai is not spiced to perfection!')" maxlength="150"></textarea>
-            <div class="pitch-actions">
-              <button id="submit-pitch-btn" class="btn btn-gold btn-large">🚀 Submit Pitch</button>
-            </div>
-          </div>
-
-          <div id="pitch-submitted-feedback" class="hidden feedback-box">
-            <div class="check-icon">✅</div>
-            <h3>Pitch Locked In!</h3>
-            <p>Waiting for remaining players to submit...</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= 5. SHOWCASE SCREEN ================= -->
-      <section id="screen-showcase" class="screen">
-        <div class="phase-card glassmorphism">
-          <div class="phase-top-bar">
-            <span class="phase-tag">LIVE PITCH SHOWCASE</span>
-            <div class="timer-circle" id="showcase-timer">18</div>
-          </div>
-
-          <h2>📢 The Pitches Are In!</h2>
-          <p class="sub-desc">Listen carefully. One of these pitches is from a fake inventor...</p>
-
-          <div id="showcase-pitches-grid" class="showcase-grid">
-            <!-- Dynamically injected pitch cards -->
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= 6. VOTING SCREEN ================= -->
-      <section id="screen-voting" class="screen">
-        <div class="phase-card glassmorphism">
-          <div class="phase-top-bar">
-            <span class="phase-tag">IMPOSTER TRIBUNAL</span>
-            <div class="timer-circle" id="voting-timer">25</div>
-          </div>
-
-          <h2>🕵️ Accuse The Imposter!</h2>
-          <p class="sub-desc">Tap on the player whose pitch felt suspicious or fake:</p>
-
-          <div id="voting-candidates-grid" class="voting-grid">
-            <!-- Player candidate buttons -->
-          </div>
-
-          <div id="vote-submitted-feedback" class="hidden feedback-box">
-            <h3>Vote Cast! 🗳️</h3>
-            <p>Tallying accusations...</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= 7. AUCTION SCREEN ================= -->
-      <section id="screen-auction" class="screen">
-        <div class="auction-layout">
-          <div class="auction-main-card glassmorphism">
-            <div class="phase-top-bar">
-              <span class="phase-tag">LIVE AUCTION ARENA</span>
-              <div class="timer-circle auction-timer" id="auction-timer">15</div>
-            </div>
-
-            <div class="auction-item-display">
-              <div class="gavel-icon">🔨</div>
-              <h2 id="auction-item-title">Invention Name</h2>
-              <span class="item-category-tag" id="auction-item-category">Category</span>
-              <div class="bid-display-box">
-                <span class="bid-label">CURRENT HIGHEST BID</span>
-                <div class="current-bid-amount" id="auction-current-bid">₹0</div>
-                <div class="highest-bidder-tag">Bidder: <span id="auction-high-bidder">None</span></div>
-              </div>
-            </div>
-
-            <!-- Controller Bidding Buttons for Players -->
-            <div class="bidding-controls" id="bidding-controls">
-              <button id="bid-500-btn" class="btn btn-gold">+ ₹500</button>
-              <button id="bid-1000-btn" class="btn btn-primary">+ ₹1,000</button>
-              <button id="pass-bid-btn" class="btn btn-danger">🚫 Fold / Pass</button>
-            </div>
-
-            <div id="passed-feedback" class="hidden feedback-box">
-              <p>You folded for this item. Watching the bids...</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= 8. ROUND REVEAL SCREEN ================= -->
-      <section id="screen-reveal" class="screen">
-        <div class="phase-card glassmorphism">
-          <div class="phase-top-bar">
-            <span class="phase-tag">ROUND BREAKDOWN</span>
-            <div class="timer-circle" id="reveal-timer">15</div>
-          </div>
-
-          <div id="reveal-summary-box" class="reveal-box">
-            <!-- Injected dynamically with Imposter reveal & auction winner -->
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= 9. GAME OVER / PODIUM SCREEN ================= -->
-      <section id="screen-gameover" class="screen">
-        <div class="podium-card glassmorphism">
-          <h1 class="victory-title">👑 GRAND JUGAAD MASTER 👑</h1>
-          <p class="victory-subtitle">Final Leaderboard & Results</p>
-
-          <div id="podium-display" class="podium-container">
-            <!-- 1st, 2nd, 3rd place podium stand -->
-          </div>
-
-          <div id="final-leaderboard-list" class="final-roster"></div>
-
-          <div class="gameover-actions">
-            <button id="play-again-btn" class="btn btn-gold btn-large">🔄 Play Again</button>
-            <button id="leave-room-btn" class="btn btn-outline">🏠 Exit to Home</button>
-          </div>
-        </div>
-      </section>
-
-    </main>
-
-    <!-- Fixed Bottom Reaction Bar (During Active Gameplay) -->
-    <footer id="bottom-reaction-bar" class="hidden">
-      <div class="reaction-buttons">
-        <button class="rx-btn" data-emoji="🔥">🔥</button>
-        <button class="rx-btn" data-emoji="💀">💀</button>
-        <button class="rx-btn" data-emoji="💰">💰</button>
-        <button class="rx-btn" data-emoji="🚀">🚀</button>
-        <button class="rx-btn" data-emoji="😂">😂</button>
-        <button class="rx-btn" data-emoji="🚨">🚨</button>
-        <button class="rx-btn" data-emoji="👏">👏</button>
       </div>
-    </footer>
+    </section>
+
+    <!-- ================= 2. LOBBY SCREEN ================= -->
+    <section id="screen-lobby" class="screen">
+      <div class="lobby-container">
+        <div class="lobby-header-box">
+          <span class="sub-tag">ROOM ACCESS CODE</span>
+          <h2 id="lobby-code-display">----</h2>
+          <button id="copy-url-btn" class="btn btn-sm btn-outline">📋 Copy Invite Link</button>
+        </div>
+
+        <div class="lobby-grid">
+          <!-- QR Scanner for Mobile Friends -->
+          <div class="qr-box">
+            <canvas id="qr-canvas"></canvas>
+            <p>Scan with phone to join the race!</p>
+          </div>
+
+          <!-- Connected Pilots -->
+          <div class="pilots-box">
+            <h3>GRID PILOTS (<span id="pilot-count">0</span>/8)</h3>
+            <div id="pilots-list" class="pilots-list"></div>
+          </div>
+        </div>
+
+        <div class="lobby-actions">
+          <div id="host-panel" class="host-panel hidden">
+            <button id="start-race-btn" class="btn btn-gold btn-large glow-btn">🏁 START COMBAT RACE</button>
+            <button id="add-bot-btn" class="btn btn-primary btn-sm">🤖 + Add AI Combat Racer</button>
+          </div>
+          <div id="guest-waiting" class="guest-waiting">
+            <div class="pulse-radar"></div>
+            <p>Waiting for Host to launch the grid...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 3. ACTIVE RACING & COMBAT CANVAS VIEWPORT ================= -->
+    <section id="screen-game" class="screen">
+      <!-- HUD Overlay -->
+      <div id="hud">
+        <!-- Top Stats Bar -->
+        <div class="hud-top">
+          <div class="hud-box position-box">
+            <span class="hud-label">POSITION</span>
+            <div class="hud-val" id="hud-position">1st</div>
+          </div>
+          <div class="hud-box lap-box">
+            <span class="hud-label">LAP</span>
+            <div class="hud-val"><span id="hud-lap">1</span>/3</div>
+          </div>
+          <div class="hud-box kills-box">
+            <span class="hud-label">KILLS</span>
+            <div class="hud-val" id="hud-kills">0 💀</div>
+          </div>
+        </div>
+
+        <!-- Minimap Radar -->
+        <div id="minimap-container">
+          <canvas id="minimap-canvas" width="160" height="110"></canvas>
+        </div>
+
+        <!-- Kill Feed Alerts -->
+        <div id="kill-feed"></div>
+
+        <!-- Countdown Overlay -->
+        <div id="countdown-banner" class="hidden">
+          <span id="countdown-num">3</span>
+        </div>
+
+        <!-- Bottom Status Gauges -->
+        <div class="hud-bottom">
+          <!-- Health & Shield -->
+          <div class="gauge-group">
+            <div class="bar-container">
+              <span class="bar-label">SHIELD</span>
+              <div class="bar-bg"><div id="shield-fill" class="bar-fill shield"></div></div>
+            </div>
+            <div class="bar-container">
+              <span class="bar-label">ARMOR</span>
+              <div class="bar-bg"><div id="health-fill" class="bar-fill health"></div></div>
+            </div>
+          </div>
+
+          <!-- Speed & Nitro -->
+          <div class="speed-nitro-group">
+            <div class="speed-gauge">
+              <span id="speed-display">0</span>
+              <span class="kmh">KM/H</span>
+            </div>
+            <div class="nitro-gauge">
+              <div id="nitro-fill" class="nitro-bar"></div>
+              <span class="nitro-txt">NITRO BOOST</span>
+            </div>
+          </div>
+
+          <!-- Active Weapon -->
+          <div class="weapon-card">
+            <span class="weapon-label">WEAPON</span>
+            <div id="weapon-name">PLASMA GATLING</div>
+            <span id="weapon-ammo">∞ AMMO</span>
+          </div>
+        </div>
+
+        <!-- Mobile Touch Controls -->
+        <div id="touch-controls" class="mobile-only">
+          <div class="touch-steer-zone">
+            <button id="touch-left" class="t-btn steer-btn">◀</button>
+            <button id="touch-right" class="t-btn steer-btn">▶</button>
+          </div>
+          <div class="touch-action-zone">
+            <button id="touch-drift" class="t-btn drift-btn">💨 DRIFT</button>
+            <button id="touch-nitro" class="t-btn nitro-btn">⚡ NITRO</button>
+            <button id="touch-shoot" class="t-btn fire-btn">🔥 FIRE</button>
+            <button id="touch-gas" class="t-btn gas-btn">▲ DRIVE</button>
+            <button id="touch-brake" class="t-btn brake-btn">▼ REV</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main World Canvas -->
+      <canvas id="game-canvas"></canvas>
+    </section>
+
+    <!-- ================= 4. PODIUM / GAMEOVER SCREEN ================= -->
+    <section id="screen-gameover" class="screen">
+      <div class="podium-card">
+        <h1 class="podium-title">🏁 RACE COMPLETE 🏁</h1>
+        <p class="podium-subtitle">Combat Champion Leaderboard</p>
+
+        <div id="podium-ranks" class="podium-stand"></div>
+
+        <div class="results-table-box">
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>RANK</th>
+                <th>PILOT</th>
+                <th>KILLS</th>
+                <th>TIME</th>
+              </tr>
+            </thead>
+            <tbody id="results-table-body"></tbody>
+          </table>
+        </div>
+
+        <div class="podium-actions">
+          <button id="rematch-btn" class="btn btn-gold btn-large">🔄 NEW RACE</button>
+          <button id="exit-btn" class="btn btn-outline">🏠 GARAGE</button>
+        </div>
+      </div>
+    </section>
+
   </div>
 
-  <!-- Socket.io and Embedded Scripts -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="game.js"></script>
 </body>
