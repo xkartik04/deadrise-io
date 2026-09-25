@@ -43,7 +43,7 @@ const hud = {
 const radarCanvas = document.getElementById('radar-canvas');
 const radarCtx = radarCanvas.getContext('2d');
 
-// --- 🔊 AUDIO ENGINE (Synthesizer) ---
+// --- 🔊 AUDIO ENGINE ---
 class AudioEngine {
   constructor() {
     this.ctx = null;
@@ -52,7 +52,12 @@ class AudioEngine {
   init() {
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) this.ctx = new AudioCtx();
+      if (AudioCtx) {
+        this.ctx = new AudioCtx();
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
     }
   }
 
@@ -141,19 +146,16 @@ scene.add(moonLight);
 
 // Environment Construction
 function build3DEnvironment() {
-  // Ground
   const groundGeo = new THREE.PlaneGeometry(300, 300);
   const groundMat = new THREE.MeshStandardMaterial({ color: 0x111622, roughness: 0.85 });
   const ground = new THREE.Mesh(groundGeo, groundMat);
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
 
-  // Grid floor lines
   const gridHelper = new THREE.GridHelper(300, 60, 0x00f0ff, 0x1a233a);
   gridHelper.position.y = 0.02;
   scene.add(gridHelper);
 
-  // Buildings & Bunkers
   const buildingMat = new THREE.MeshStandardMaterial({ color: 0x182033, roughness: 0.7 });
   const bunkerMat = new THREE.MeshStandardMaterial({ color: 0x121724, roughness: 0.9 });
 
@@ -172,11 +174,8 @@ function build3DEnvironment() {
     scene.add(mesh);
   });
 
-  // Guard Towers
   createGuardTower(-25, -25);
   createGuardTower(25, 25);
-
-  // Street Lamps & Fire Barrels
   createStreetLamp(-15, -15);
   createStreetLamp(15, -15);
   createStreetLamp(-15, 15);
@@ -226,12 +225,11 @@ function createBurningBarrel(x, z) {
 build3DEnvironment();
 
 // --- 🔫 3D FIRST-PERSON WEAPON & HANDS RIG ---
-let gunMesh, muzzleFlashLight, bulletCasings = [], bloodParticles = [], bulletTracers = [];
+let gunMesh, muzzleFlashLight, bulletCasings = [], bloodParticles = [];
 
 function buildFPSWeaponRig() {
   const gunGroup = new THREE.Group();
 
-  // SCAR-H Receiver (Tan/Gold color matching screenshots 1, 2, 3, 5!)
   const bodyMat = new THREE.MeshStandardMaterial({ color: 0xcca050, roughness: 0.4, metalness: 0.6 });
   const body = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.16, 0.85), bodyMat);
   gunGroup.add(body);
@@ -246,7 +244,6 @@ function buildFPSWeaponRig() {
   barrel.position.set(0, 0.04, -0.65);
   gunGroup.add(barrel);
 
-  // Iron Sights
   const sightGeo = new THREE.BoxGeometry(0.04, 0.08, 0.04);
   const frontSight = new THREE.Mesh(sightGeo, railMat);
   frontSight.position.set(0, 0.13, -0.7);
@@ -255,13 +252,11 @@ function buildFPSWeaponRig() {
   rearSight.position.set(0, 0.13, 0.2);
   gunGroup.add(rearSight);
 
-  // Magazine
   const mag = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.35, 0.16), railMat);
   mag.position.set(0, -0.22, 0.05);
   mag.rotation.x = -0.15;
   gunGroup.add(mag);
 
-  // Hands & Tactical Gloves
   const gloveMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.6 });
   const rightHand = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.3), gloveMat);
   rightHand.position.set(0.08, -0.12, 0.25);
@@ -271,7 +266,6 @@ function buildFPSWeaponRig() {
   leftHand.position.set(-0.08, -0.05, -0.25);
   gunGroup.add(leftHand);
 
-  // Muzzle Flash PointLight
   muzzleFlashLight = new THREE.PointLight(0xffea00, 0, 16);
   muzzleFlashLight.position.set(0, 0.04, -0.95);
   gunGroup.add(muzzleFlashLight);
@@ -284,8 +278,7 @@ function buildFPSWeaponRig() {
 buildFPSWeaponRig();
 
 // --- 🧟 3D ZOMBIE MESH GENERATOR ---
-const zombieMeshes = new Map(); // id -> THREE.Group
-const raycastTargets = []; // Array of mesh roots for raycasting
+const zombieMeshes = new Map();
 
 function createZombie3DMesh(id, isBoss = false) {
   const group = new THREE.Group();
@@ -294,20 +287,17 @@ function createZombie3DMesh(id, isBoss = false) {
 
   const suitMat = new THREE.MeshStandardMaterial({ color: isBoss ? 0x880000 : 0x475569, roughness: 0.8 });
   const fleshMat = new THREE.MeshStandardMaterial({ color: 0x85929e, roughness: 0.9 });
-  const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0033 }); // Glowing red eyes!
+  const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
 
-  // Torso
   const torso = new THREE.Mesh(new THREE.BoxGeometry(0.9 * scale, 1.2 * scale, 0.5 * scale), suitMat);
   torso.position.y = 1.4 * scale;
   group.add(torso);
 
-  // Head
   const head = new THREE.Mesh(new THREE.BoxGeometry(0.6 * scale, 0.6 * scale, 0.6 * scale), fleshMat);
   head.position.set(0, 2.3 * scale, 0);
   head.userData.isHead = true;
   group.add(head);
 
-  // Red Glowing Eyes
   const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.08 * scale, 8, 8), eyeMat);
   leftEye.position.set(-0.16 * scale, 2.35 * scale, 0.31 * scale);
   group.add(leftEye);
@@ -316,7 +306,6 @@ function createZombie3DMesh(id, isBoss = false) {
   rightEye.position.set(0.16 * scale, 2.35 * scale, 0.31 * scale);
   group.add(rightEye);
 
-  // Zombie Arms (Reaching out forward matching screenshot!)
   const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.25 * scale, 0.25 * scale, 0.9 * scale), fleshMat);
   leftArm.position.set(-0.6 * scale, 1.7 * scale, 0.45 * scale);
   group.add(leftArm);
@@ -325,7 +314,6 @@ function createZombie3DMesh(id, isBoss = false) {
   rightArm.position.set(0.6 * scale, 1.7 * scale, 0.45 * scale);
   group.add(rightArm);
 
-  // Legs
   const legMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
   const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.3 * scale, 1.0 * scale, 0.3 * scale), legMat);
   leftLeg.position.set(-0.25 * scale, 0.5 * scale, 0);
@@ -372,7 +360,6 @@ document.addEventListener('mousemove', (e) => {
   socket.emit('player_input', inputs);
 });
 
-// Shooting
 window.addEventListener('mousedown', (e) => {
   if (e.button === 0 && isPointerLocked) {
     fireBullet();
@@ -413,19 +400,14 @@ function fireBullet() {
   const me = latestSnapshot.players.find(p => p.id === myPlayerId);
   if (!me || me.ammo <= 0 || me.isReloading) return;
 
-  // Visual Recoil
   recoilOffset.z = 0.1;
   recoilOffset.y = 0.035;
   muzzleFlashLight.intensity = 5.0;
   setTimeout(() => { muzzleFlashLight.intensity = 0; }, 45);
 
-  // Eject Yellow Bullet Shell Casing (matching screenshot 5!)
   spawnBulletCasing();
-
-  // Play Sound
   audio.playRifleShot();
 
-  // Precise 3D Raycasting with Three.js
   const raycaster = new THREE.Raycaster();
   raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
 
@@ -557,11 +539,13 @@ document.querySelector('.buy-ammo-btn').addEventListener('click', () => socket.e
 document.querySelector('.buy-armor-btn').addEventListener('click', () => socket.emit('buy_armor'));
 
 // --- SOCKET EVENTS ---
-socket.on('room_created', ({ roomCode, player }) => {
+socket.on('room_created', ({ roomCode, player, autoStart }) => {
   currentRoomCode = roomCode;
   myPlayerId = player.id;
   isHost = true;
-  setupLobby(roomCode, [player], true);
+  if (!autoStart) {
+    setupLobby(roomCode, [player], true);
+  }
 });
 
 socket.on('room_joined', ({ roomCode, player }) => {
@@ -729,12 +713,10 @@ function animate() {
     if (me) {
       camera.position.set(me.x, me.y, me.z);
 
-      // Weapon recoil recovery
       recoilOffset.z *= 0.85;
       recoilOffset.y *= 0.85;
       gunMesh.position.set(0.24, -0.26 + recoilOffset.y, -0.55 + recoilOffset.z);
 
-      // HUD updates
       hud.healthVal.textContent = me.health;
       hud.healthFill.style.width = `${me.health}%`;
       hud.armorVal.textContent = me.armor;
