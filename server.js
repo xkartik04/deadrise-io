@@ -11,13 +11,18 @@ const io = new Server(server, {
 });
 
 app.use(cors());
+// Disable caching so browser always loads freshest scripts
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 const PORT = process.env.PORT || 3000;
-
 const MAP_BOUNDS = 120;
 
-// Weapon Config
 const WEAPONS = {
   scar: { name: 'SCAR-H Assault', damage: 34, headshotMult: 2.2, fireRate: 110, magSize: 30, maxAmmo: 180, reloadTime: 1800, cost: 0, color: '#ffb703' },
   shotgun: { name: 'SPAS-12 Shotgun', damage: 20, headshotMult: 1.8, fireRate: 600, magSize: 8, maxAmmo: 48, reloadTime: 2200, pellets: 7, cost: 1200, color: '#ff007f' },
@@ -44,9 +49,9 @@ class FPSPlayer {
     this.isHost = isHost;
     this.isBot = isBot;
 
-    this.x = (Math.random() - 0.5) * 30;
+    this.x = (Math.random() - 0.5) * 20;
     this.y = 1.6;
-    this.z = (Math.random() - 0.5) * 30;
+    this.z = (Math.random() - 0.5) * 20;
     this.yaw = 0;
     this.pitch = 0;
 
@@ -75,8 +80,8 @@ class FPSPlayer {
   respawn() {
     this.health = this.maxHealth;
     this.armor = 50;
-    this.x = (Math.random() - 0.5) * 40;
-    this.z = (Math.random() - 0.5) * 40;
+    this.x = (Math.random() - 0.5) * 30;
+    this.z = (Math.random() - 0.5) * 30;
     this.ammo = WEAPONS[this.currentWeapon].magSize;
     this.isReloading = false;
   }
@@ -180,7 +185,7 @@ class FPSZombie {
     this.z = z;
     this.yaw = 0;
     this.isBoss = isBoss;
-    this.speed = isBoss ? 0.08 : (0.09 + Math.random() * 0.04 + wave * 0.005);
+    this.speed = isBoss ? 0.07 : (0.08 + Math.random() * 0.03 + wave * 0.005);
     this.health = isBoss ? (400 + wave * 150) : (50 + wave * 18);
     this.maxHealth = this.health;
     this.damage = isBoss ? 35 : 18;
@@ -298,7 +303,7 @@ class FPSRoom {
     if (this.zombiesRemainingToSpawn > 0 && this.spawnTimer % 18 === 0) {
       this.zombiesRemainingToSpawn--;
       const angle = Math.random() * Math.PI * 2;
-      const dist = 40 + Math.random() * 25;
+      const dist = 35 + Math.random() * 20;
       const isBoss = (this.wave % 5 === 0 && this.zombiesRemainingToSpawn === 0);
       this.zombies.push(new FPSZombie(Math.sin(angle) * dist, Math.cos(angle) * dist, this.wave, isBoss));
     }
@@ -452,11 +457,13 @@ io.on('connection', (socket) => {
     socket.emit('room_created', {
       roomCode: code,
       player: { id: p.id, name: p.name, color: p.color, isHost: true },
-      weapons: WEAPONS
+      weapons: WEAPONS,
+      autoStart: !!autoStart
     });
 
     if (autoStart) {
       room.startGame(io);
+      socket.emit('game_started');
       io.to(code).emit('game_started');
     }
   });

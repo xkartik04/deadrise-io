@@ -37,7 +37,8 @@ const hud = {
   waveBannerSub: document.getElementById('wave-banner-subtitle'),
   hitmarker: document.getElementById('hitmarker'),
   pointerLockOverlay: document.getElementById('pointer-lock-overlay'),
-  storeModal: document.getElementById('store-modal')
+  storeModal: document.getElementById('store-modal'),
+  shareBtn: document.getElementById('ingame-share-btn')
 };
 
 const radarCanvas = document.getElementById('radar-canvas');
@@ -124,6 +125,8 @@ scene.background = new THREE.Color(0x070a12);
 scene.fog = new THREE.FogExp2(0x070a12, 0.016);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
+camera.position.set(0, 1.6, 0);
+
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -474,6 +477,8 @@ hud.shareBtn.addEventListener('click', copyShareLinkToClipboard);
 document.getElementById('quick-play-btn').addEventListener('click', () => {
   myName = document.getElementById('player-name-input').value.trim() || 'ApexHunter';
   audio.init();
+  showScreen('game');
+  hud.pointerLockOverlay.classList.remove('hidden');
   socket.emit('create_room', { playerName: myName, playerColor: myColor, autoStart: true });
 });
 
@@ -493,6 +498,8 @@ document.getElementById('join-room-btn').addEventListener('click', () => {
     return;
   }
   audio.init();
+  showScreen('game');
+  hud.pointerLockOverlay.classList.remove('hidden');
   socket.emit('join_room', { roomCode: code, playerName: myName, playerColor: myColor });
 });
 
@@ -535,8 +542,28 @@ document.getElementById('close-store-btn').addEventListener('click', toggleStore
 document.querySelectorAll('.buy-btn').forEach(btn => {
   btn.addEventListener('click', () => socket.emit('buy_weapon', { weaponKey: btn.dataset.item }));
 });
-document.querySelector('.buy-ammo-btn').addEventListener('click', () => socket.emit('buy_ammo'));
-document.querySelector('.buy-armor-btn').addEventListener('click', () => socket.emit('buy_armor'));
+document.querySelector('.buy-ammo-btn')?.addEventListener('click', () => socket.emit('buy_ammo'));
+document.querySelector('.buy-armor-btn')?.addEventListener('click', () => socket.emit('buy_armor'));
+
+// Mobile touch button triggers
+document.getElementById('m-btn-sprint')?.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  inputs.sprint = !inputs.sprint;
+  socket.emit('player_input', inputs);
+});
+document.getElementById('m-btn-reload')?.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  socket.emit('player_reload');
+  audio.playReload();
+});
+document.getElementById('m-btn-store')?.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  toggleStore();
+});
+document.getElementById('m-btn-fire')?.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  fireBullet();
+});
 
 // --- SOCKET EVENTS ---
 socket.on('room_created', ({ roomCode, player, autoStart }) => {
@@ -545,6 +572,9 @@ socket.on('room_created', ({ roomCode, player, autoStart }) => {
   isHost = true;
   if (!autoStart) {
     setupLobby(roomCode, [player], true);
+  } else {
+    showScreen('game');
+    hud.pointerLockOverlay.classList.remove('hidden');
   }
 });
 
@@ -552,7 +582,8 @@ socket.on('room_joined', ({ roomCode, player }) => {
   currentRoomCode = roomCode;
   myPlayerId = player.id;
   isHost = player.isHost;
-  setupLobby(roomCode, [player], isHost);
+  showScreen('game');
+  hud.pointerLockOverlay.classList.remove('hidden');
 });
 
 socket.on('lobby_update', ({ players }) => updateRoster(players));
@@ -561,7 +592,6 @@ socket.on('join_error', ({ message }) => alert(message));
 socket.on('game_started', () => {
   showScreen('game');
   hud.pointerLockOverlay.classList.remove('hidden');
-  requestGamePointerLock();
 });
 
 socket.on('fps_tick', (snapshot) => {
@@ -707,84 +737,86 @@ function renderQRCode(canvasId, text) {
 function animate() {
   requestAnimationFrame(animate);
 
-  if (screens.game.classList.contains('active') && latestSnapshot) {
-    const me = latestSnapshot.players.find(p => p.id === myPlayerId);
+  if (screens.game.classList.contains('active')) {
+    if (latestSnapshot) {
+      const me = latestSnapshot.players.find(p => p.id === myPlayerId);
 
-    if (me) {
-      camera.position.set(me.x, me.y, me.z);
+      if (me) {
+        camera.position.set(me.x, me.y, me.z);
 
-      recoilOffset.z *= 0.85;
-      recoilOffset.y *= 0.85;
-      gunMesh.position.set(0.24, -0.26 + recoilOffset.y, -0.55 + recoilOffset.z);
+        recoilOffset.z *= 0.85;
+        recoilOffset.y *= 0.85;
+        gunMesh.position.set(0.24, -0.26 + recoilOffset.y, -0.55 + recoilOffset.z);
 
-      hud.healthVal.textContent = me.health;
-      hud.healthFill.style.width = `${me.health}%`;
-      hud.armorVal.textContent = me.armor;
-      hud.armorFill.style.width = `${(me.armor / 50) * 100}%`;
-      hud.cashDisplay.textContent = `$${me.cash.toLocaleString()}`;
-      hud.zombiesCount.textContent = latestSnapshot.zombiesCount;
+        hud.healthVal.textContent = me.health;
+        hud.healthFill.style.width = `${me.health}%`;
+        hud.armorVal.textContent = me.armor;
+        hud.armorFill.style.width = `${(me.armor / 50) * 100}%`;
+        hud.cashDisplay.textContent = `$${me.cash.toLocaleString()}`;
+        hud.zombiesCount.textContent = latestSnapshot.zombiesCount;
 
-      hud.weaponName.textContent = me.weapon.toUpperCase();
-      hud.ammoClip.textContent = me.ammo;
-      hud.ammoReserve.textContent = me.reserveAmmo;
+        hud.weaponName.textContent = me.weapon.toUpperCase();
+        hud.ammoClip.textContent = me.ammo;
+        hud.ammoReserve.textContent = me.reserveAmmo;
 
-      if (me.isReloading) hud.reloadPrompt.classList.remove('hidden');
-      else hud.reloadPrompt.classList.add('hidden');
+        if (me.isReloading) hud.reloadPrompt.classList.remove('hidden');
+        else hud.reloadPrompt.classList.add('hidden');
 
-      document.querySelectorAll('.w-dot').forEach(dot => {
-        const w = Number(dot.dataset.w);
-        if (w === latestSnapshot.wave) dot.classList.add('active');
-        else dot.classList.remove('active');
+        document.querySelectorAll('.w-dot').forEach(dot => {
+          const w = Number(dot.dataset.w);
+          if (w === latestSnapshot.wave) dot.classList.add('active');
+          else dot.classList.remove('active');
+        });
+      }
+
+      // Synchronize 3D Zombie Models
+      const activeZombieIds = new Set();
+      latestSnapshot.zombies.forEach(z => {
+        activeZombieIds.add(z.id);
+        let mesh = zombieMeshes.get(z.id);
+        if (!mesh) {
+          mesh = createZombie3DMesh(z.id, z.isBoss);
+          scene.add(mesh);
+          zombieMeshes.set(z.id, mesh);
+        }
+        mesh.position.set(z.x, z.y, z.z);
+        mesh.rotation.y = z.yaw;
       });
+
+      zombieMeshes.forEach((mesh, id) => {
+        if (!activeZombieIds.has(id)) {
+          scene.remove(mesh);
+          zombieMeshes.delete(id);
+        }
+      });
+
+      // Animate Casings
+      bulletCasings = bulletCasings.filter(c => {
+        c.mesh.position.add(c.vel);
+        c.vel.y -= 0.008;
+        c.mesh.rotation.x += 0.2;
+        c.life--;
+        if (c.life <= 0) {
+          scene.remove(c.mesh);
+          return false;
+        }
+        return true;
+      });
+
+      // Animate Blood
+      bloodParticles = bloodParticles.filter(bp => {
+        bp.mesh.position.add(bp.vel);
+        bp.vel.y -= 0.01;
+        bp.life--;
+        if (bp.life <= 0) {
+          scene.remove(bp.mesh);
+          return false;
+        }
+        return true;
+      });
+
+      renderRadar();
     }
-
-    // Synchronize 3D Zombie Models
-    const activeZombieIds = new Set();
-    latestSnapshot.zombies.forEach(z => {
-      activeZombieIds.add(z.id);
-      let mesh = zombieMeshes.get(z.id);
-      if (!mesh) {
-        mesh = createZombie3DMesh(z.id, z.isBoss);
-        scene.add(mesh);
-        zombieMeshes.set(z.id, mesh);
-      }
-      mesh.position.set(z.x, z.y, z.z);
-      mesh.rotation.y = z.yaw;
-    });
-
-    zombieMeshes.forEach((mesh, id) => {
-      if (!activeZombieIds.has(id)) {
-        scene.remove(mesh);
-        zombieMeshes.delete(id);
-      }
-    });
-
-    // Animate Casings
-    bulletCasings = bulletCasings.filter(c => {
-      c.mesh.position.add(c.vel);
-      c.vel.y -= 0.008;
-      c.mesh.rotation.x += 0.2;
-      c.life--;
-      if (c.life <= 0) {
-        scene.remove(c.mesh);
-        return false;
-      }
-      return true;
-    });
-
-    // Animate Blood
-    bloodParticles = bloodParticles.filter(bp => {
-      bp.mesh.position.add(bp.vel);
-      bp.vel.y -= 0.01;
-      bp.life--;
-      if (bp.life <= 0) {
-        scene.remove(bp.mesh);
-        return false;
-      }
-      return true;
-    });
-
-    renderRadar();
   }
 
   renderer.render(scene, camera);
