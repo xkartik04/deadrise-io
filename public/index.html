@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Chakra+Petch:wght@600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
-  <!-- Three.js 3D WebGL Library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Local Three.js WebGL Engine -->
+  <script src="three.min.js"></script>
 </head>
 <body>
   <div id="game-app">
@@ -42,11 +42,12 @@
           </div>
 
           <div class="menu-actions">
-            <button id="quick-play-btn" class="btn btn-primary btn-large glow-btn">⚡ DEPLOY SOLO / HOST SQUAD</button>
+            <button id="quick-play-btn" class="btn btn-primary btn-large glow-btn">⚡ QUICK MATCH (PLAY NOW)</button>
+            <button id="host-squad-btn" class="btn btn-outline">👑 CREATE SQUAD LOBBY</button>
             
             <div class="room-join-row">
               <input type="text" id="join-room-input" placeholder="ROOM CODE" maxlength="4" autocomplete="off" />
-              <button id="join-room-btn" class="btn btn-gold">🎮 JOIN SQUAD</button>
+              <button id="join-room-btn" class="btn btn-gold">🎮 JOIN ROOM</button>
             </div>
           </div>
         </div>
@@ -125,7 +126,7 @@
           <!-- Center Wave Progress -->
           <div class="wave-tracker">
             <div class="wave-dots">
-              <span class="w-dot" data-w="1">1</span>
+              <span class="w-dot active" data-w="1">1</span>
               <span class="w-dot" data-w="2">2</span>
               <span class="w-dot" data-w="3">3</span>
               <span class="w-dot" data-w="4">4</span>
