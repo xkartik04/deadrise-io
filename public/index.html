@@ -3,214 +3,208 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>CYBER NITRO: Combat Racing Arena</title>
-  <meta name="description" content="High-octane action multiplayer racing & shooting game! Drift, boost, fire rockets, and blast opponents across the track." />
+  <title>DEADRISE.IO - Multiplayer Combat & Zombie Shooter</title>
+  <meta name="description" content="Fast-paced .io multiplayer shooter. Battle players in PvP Deathmatch or survive endless Zombie waves in Co-op Deadrise!" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Chakra+Petch:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div id="game-app">
     
-    <!-- ================= 1. HOME / GARAGE SCREEN ================= -->
+    <!-- Custom Crosshair -->
+    <div id="custom-crosshair"></div>
+
+    <!-- ================= 1. HOME / MENU SCREEN ================= -->
     <section id="screen-home" class="screen active">
-      <div class="home-container">
-        <header class="game-logo">
-          <div class="logo-sub">🔥 ACTION RACING & SHOOTING ARENA 🔥</div>
-          <h1>CYBER NITRO</h1>
-          <div class="logo-tag">MULTI-DEVICE COMBAT COMBAT</div>
+      <div class="menu-container">
+        <header class="game-header">
+          <div class="badge-tag">🔥 MULTIPLAYER .IO ACTION SHOOTER 🔥</div>
+          <h1 class="glitch-title" data-text="DEADRISE.IO">DEADRISE.IO</h1>
+          <p class="tagline">SURVIVE THE APOCALYPSE OR DOMINATE THE ARENA</p>
         </header>
 
-        <div class="garage-card">
-          <div class="car-customizer">
-            <h3>🎨 CHOOSE YOUR COMBAT MACHINE</h3>
-            <div class="color-palette">
-              <button class="color-dot selected" data-color="#00f0ff" style="background:#00f0ff;"></button>
-              <button class="color-dot" data-color="#ff007f" style="background:#ff007f;"></button>
-              <button class="color-dot" data-color="#ffb703" style="background:#ffb703;"></button>
-              <button class="color-dot" data-color="#00f59b" style="background:#00f59b;"></button>
-              <button class="color-dot" data-color="#9d4edd" style="background:#9d4edd;"></button>
-              <button class="color-dot" data-color="#ff3366" style="background:#ff3366;"></button>
-            </div>
-
-            <div class="car-preview-box">
-              <canvas id="car-preview-canvas" width="180" height="100"></canvas>
+        <div class="menu-card glassmorphism">
+          <!-- Game Mode Selector -->
+          <div class="mode-selector">
+            <label>CHOOSE GAME MODE:</label>
+            <div class="mode-options">
+              <button type="button" class="mode-btn selected" data-mode="DEADSHOT_PVP">
+                <span class="mode-icon">🎯</span>
+                <div class="mode-text">
+                  <strong>DEADSHOT PvP</strong>
+                  <small>Free-for-All Combat</small>
+                </div>
+              </button>
+              <button type="button" class="mode-btn" data-mode="DEADRISE_HORDE">
+                <span class="mode-icon">🧟</span>
+                <div class="mode-text">
+                  <strong>DEADRISE HORDE</strong>
+                  <small>Co-op Zombie Survival</small>
+                </div>
+              </button>
             </div>
           </div>
 
-          <div class="pilot-form">
-            <label>PILOT CALLSIGN:</label>
-            <input type="text" id="player-name-input" placeholder="e.g. ApexHunter" maxlength="12" autocomplete="off" />
+          <!-- Player Customization -->
+          <div class="player-customization">
+            <div class="input-row">
+              <label>SOLDIER CALLSIGN:</label>
+              <input type="text" id="player-name-input" placeholder="e.g. GhostSniper" maxlength="12" autocomplete="off" />
+            </div>
 
-            <div class="action-buttons-group">
-              <div class="join-row">
-                <input type="text" id="join-room-input" placeholder="ROOM CODE" maxlength="4" autocomplete="off" />
-                <button id="join-btn" class="btn btn-primary">⚡ JOIN BATTLE</button>
+            <div class="color-picker-row">
+              <label>ARMOR COLOR:</label>
+              <div class="color-options">
+                <button class="color-dot selected" data-color="#00f0ff" style="background:#00f0ff;"></button>
+                <button class="color-dot" data-color="#ff007f" style="background:#ff007f;"></button>
+                <button class="color-dot" data-color="#ffb703" style="background:#ffb703;"></button>
+                <button class="color-dot" data-color="#00f59b" style="background:#00f59b;"></button>
+                <button class="color-dot" data-color="#ff3366" style="background:#ff3366;"></button>
               </div>
-              <div class="or-divider"><span>OR</span></div>
-              <button id="create-btn" class="btn btn-gold btn-block">👑 HOST NEW MATCH</button>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="menu-actions">
+            <button id="quick-play-btn" class="btn btn-primary btn-large glow-btn">⚡ QUICK MATCH (PLAY NOW)</button>
+            
+            <div class="room-join-row">
+              <input type="text" id="join-room-input" placeholder="ENTER ROOM CODE" maxlength="4" autocomplete="off" />
+              <button id="join-room-btn" class="btn btn-gold">🎮 JOIN ROOM</button>
             </div>
           </div>
         </div>
 
-        <div class="controls-guide">
-          <span>⌨️ <strong>DESKTOP:</strong> WASD / Arrows = Drive | <strong>SPACE</strong> = Shoot | <strong>SHIFT</strong> = Nitro Boost | <strong>E</strong> = Drift</span>
-          <span>📱 <strong>MOBILE:</strong> Virtual Steering + On-Screen Fire & Nitro Pedals</span>
+        <div class="quick-controls-bar">
+          <span>⌨️ <strong>WASD:</strong> Move</span>
+          <span>🖱️ <strong>MOUSE:</strong> Aim & Shoot</span>
+          <span>⚡ <strong>SHIFT:</strong> Sprint</span>
+          <span>🔄 <strong>R:</strong> Reload</span>
+          <span>📱 <strong>MOBILE:</strong> Touch Controls</span>
         </div>
       </div>
     </section>
 
-    <!-- ================= 2. LOBBY SCREEN ================= -->
+    <!-- ================= 2. LOBBY / ROOM SHARE SCREEN ================= -->
     <section id="screen-lobby" class="screen">
-      <div class="lobby-container">
-        <div class="lobby-header-box">
-          <span class="sub-tag">ROOM ACCESS CODE</span>
-          <h2 id="lobby-code-display">----</h2>
-          <button id="copy-url-btn" class="btn btn-sm btn-outline">📋 Copy Invite Link</button>
+      <div class="lobby-card glassmorphism">
+        <div class="share-header">
+          <span class="share-tag">INVITE PLAYERS VIA LINK / QR</span>
+          <div class="code-banner">
+            <span class="code-label">ROOM CODE:</span>
+            <h2 id="lobby-room-code">----</h2>
+          </div>
+          <button id="copy-share-link-btn" class="btn btn-sm btn-gold">📋 COPY SHARING URL</button>
         </div>
 
-        <div class="lobby-grid">
-          <!-- QR Scanner for Mobile Friends -->
-          <div class="qr-box">
+        <div class="lobby-content-grid">
+          <!-- QR Code Display -->
+          <div class="qr-panel">
             <canvas id="qr-canvas"></canvas>
-            <p>Scan with phone to join the race!</p>
+            <p>Scan with mobile camera to drop in!</p>
           </div>
 
-          <!-- Connected Pilots -->
-          <div class="pilots-box">
-            <h3>GRID PILOTS (<span id="pilot-count">0</span>/8)</h3>
-            <div id="pilots-list" class="pilots-list"></div>
+          <!-- Roster -->
+          <div class="roster-panel">
+            <h3>CONNECTED SQUAD (<span id="squad-count">0</span>)</h3>
+            <div id="lobby-roster-list" class="roster-list"></div>
           </div>
         </div>
 
-        <div class="lobby-actions">
-          <div id="host-panel" class="host-panel hidden">
-            <button id="start-race-btn" class="btn btn-gold btn-large glow-btn">🏁 START COMBAT RACE</button>
-            <button id="add-bot-btn" class="btn btn-primary btn-sm">🤖 + Add AI Combat Racer</button>
+        <div class="lobby-bottom-actions">
+          <div id="host-buttons" class="host-buttons hidden">
+            <button id="start-battle-btn" class="btn btn-primary btn-large glow-btn">🚀 DEPLOY TO BATTLE</button>
+            <button id="add-bot-btn" class="btn btn-outline btn-sm">🤖 + Add AI Combat Bot</button>
           </div>
-          <div id="guest-waiting" class="guest-waiting">
-            <div class="pulse-radar"></div>
-            <p>Waiting for Host to launch the grid...</p>
+          <div id="guest-waiting-box" class="guest-waiting-box">
+            <div class="radar-spinner"></div>
+            <p>Waiting for Squad Leader to deploy...</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ================= 3. ACTIVE RACING & COMBAT CANVAS VIEWPORT ================= -->
+    <!-- ================= 3. ACTIVE GAMEPLAY CANVAS & HUD ================= -->
     <section id="screen-game" class="screen">
       <!-- HUD Overlay -->
-      <div id="hud">
-        <!-- Top Stats Bar -->
+      <div id="hud-overlay">
+        <!-- Top Status Bar -->
         <div class="hud-top">
-          <div class="hud-box position-box">
-            <span class="hud-label">POSITION</span>
-            <div class="hud-val" id="hud-position">1st</div>
+          <!-- Game Mode / Wave Display -->
+          <div class="hud-box mode-badge">
+            <span id="hud-mode-title">DEADSHOT PvP</span>
+            <span id="hud-wave-title" class="hidden">WAVE 1</span>
           </div>
-          <div class="hud-box lap-box">
-            <span class="hud-label">LAP</span>
-            <div class="hud-val"><span id="hud-lap">1</span>/3</div>
-          </div>
-          <div class="hud-box kills-box">
-            <span class="hud-label">KILLS</span>
-            <div class="hud-val" id="hud-kills">0 💀</div>
+
+          <!-- Live Share Link Button in-game -->
+          <button id="ingame-share-btn" class="hud-share-btn" title="Copy Invite Link">🔗 SHARE MATCH LINK</button>
+
+          <!-- Leaderboard Table -->
+          <div class="hud-box leaderboard-box">
+            <span class="hud-label">LEADERBOARD</span>
+            <div id="hud-leaderboard-list"></div>
           </div>
         </div>
 
-        <!-- Minimap Radar -->
-        <div id="minimap-container">
-          <canvas id="minimap-canvas" width="160" height="110"></canvas>
+        <!-- Radar Minimap -->
+        <div id="minimap-wrapper">
+          <canvas id="minimap-canvas" width="150" height="110"></canvas>
         </div>
 
-        <!-- Kill Feed Alerts -->
-        <div id="kill-feed"></div>
+        <!-- Killfeed Alerts -->
+        <div id="kill-feed-container"></div>
 
-        <!-- Countdown Overlay -->
-        <div id="countdown-banner" class="hidden">
-          <span id="countdown-num">3</span>
+        <!-- Wave / Level Clear Banner -->
+        <div id="wave-banner" class="hidden">
+          <h2 id="wave-banner-title">WAVE 1</h2>
         </div>
 
-        <!-- Bottom Status Gauges -->
+        <!-- Bottom Health, Armor & Ammo Controls -->
         <div class="hud-bottom">
-          <!-- Health & Shield -->
-          <div class="gauge-group">
-            <div class="bar-container">
-              <span class="bar-label">SHIELD</span>
-              <div class="bar-bg"><div id="shield-fill" class="bar-fill shield"></div></div>
+          <!-- Health & Armor Meters -->
+          <div class="vitals-group">
+            <div class="vital-bar">
+              <span class="vital-txt">ARMOR <span id="armor-val">50</span></span>
+              <div class="bar-track"><div id="armor-fill" class="bar-progress armor"></div></div>
             </div>
-            <div class="bar-container">
-              <span class="bar-label">ARMOR</span>
-              <div class="bar-bg"><div id="health-fill" class="bar-fill health"></div></div>
+            <div class="vital-bar">
+              <span class="vital-txt">HEALTH <span id="health-val">100</span></span>
+              <div class="bar-track"><div id="health-fill" class="bar-progress health"></div></div>
             </div>
+            <div class="stamina-track"><div id="stamina-fill" class="stamina-progress"></div></div>
           </div>
 
-          <!-- Speed & Nitro -->
-          <div class="speed-nitro-group">
-            <div class="speed-gauge">
-              <span id="speed-display">0</span>
-              <span class="kmh">KM/H</span>
+          <!-- Ammo & Weapon Display -->
+          <div class="weapon-hud-card">
+            <div class="weapon-title" id="weapon-name-display">ASSAULT RIFLE</div>
+            <div class="ammo-display">
+              <span id="current-ammo">30</span>
+              <span class="max-ammo" id="max-ammo">/ 30</span>
             </div>
-            <div class="nitro-gauge">
-              <div id="nitro-fill" class="nitro-bar"></div>
-              <span class="nitro-txt">NITRO BOOST</span>
-            </div>
-          </div>
-
-          <!-- Active Weapon -->
-          <div class="weapon-card">
-            <span class="weapon-label">WEAPON</span>
-            <div id="weapon-name">PLASMA GATLING</div>
-            <span id="weapon-ammo">∞ AMMO</span>
+            <div id="reload-indicator" class="reload-badge hidden">RELOADING...</div>
           </div>
         </div>
 
         <!-- Mobile Touch Controls -->
-        <div id="touch-controls" class="mobile-only">
-          <div class="touch-steer-zone">
-            <button id="touch-left" class="t-btn steer-btn">◀</button>
-            <button id="touch-right" class="t-btn steer-btn">▶</button>
+        <div id="mobile-touch-ui" class="mobile-only">
+          <div class="joystick-zone" id="joystick-zone">
+            <div class="joystick-base">
+              <div class="joystick-stick" id="joystick-stick"></div>
+            </div>
           </div>
-          <div class="touch-action-zone">
-            <button id="touch-drift" class="t-btn drift-btn">💨 DRIFT</button>
-            <button id="touch-nitro" class="t-btn nitro-btn">⚡ NITRO</button>
-            <button id="touch-shoot" class="t-btn fire-btn">🔥 FIRE</button>
-            <button id="touch-gas" class="t-btn gas-btn">▲ DRIVE</button>
-            <button id="touch-brake" class="t-btn brake-btn">▼ REV</button>
+
+          <div class="touch-action-buttons">
+            <button id="btn-sprint-touch" class="t-btn sprint-btn">⚡ SPRINT</button>
+            <button id="btn-reload-touch" class="t-btn reload-btn">🔄 RELOAD</button>
+            <button id="btn-shoot-touch" class="t-btn fire-btn">🔥 FIRE</button>
           </div>
         </div>
       </div>
 
-      <!-- Main World Canvas -->
+      <!-- Main Game Canvas -->
       <canvas id="game-canvas"></canvas>
-    </section>
-
-    <!-- ================= 4. PODIUM / GAMEOVER SCREEN ================= -->
-    <section id="screen-gameover" class="screen">
-      <div class="podium-card">
-        <h1 class="podium-title">🏁 RACE COMPLETE 🏁</h1>
-        <p class="podium-subtitle">Combat Champion Leaderboard</p>
-
-        <div id="podium-ranks" class="podium-stand"></div>
-
-        <div class="results-table-box">
-          <table class="results-table">
-            <thead>
-              <tr>
-                <th>RANK</th>
-                <th>PILOT</th>
-                <th>KILLS</th>
-                <th>TIME</th>
-              </tr>
-            </thead>
-            <tbody id="results-table-body"></tbody>
-          </table>
-        </div>
-
-        <div class="podium-actions">
-          <button id="rematch-btn" class="btn btn-gold btn-large">🔄 NEW RACE</button>
-          <button id="exit-btn" class="btn btn-outline">🏠 GARAGE</button>
-        </div>
-      </div>
     </section>
 
   </div>

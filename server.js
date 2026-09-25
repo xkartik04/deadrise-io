@@ -15,48 +15,44 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const PORT = process.env.PORT || 3000;
 
-// --- MAP & TRACK DEFINITION ---
-// Arena Track Size: 2400 x 1600
-const TRACK = {
-  width: 2400,
-  height: 1600,
-  checkpoints: [
-    { id: 0, x: 300, y: 350, radius: 180 },
-    { id: 1, x: 1200, y: 250, radius: 180 },
-    { id: 2, x: 2100, y: 350, radius: 180 },
-    { id: 3, x: 2150, y: 1250, radius: 180 },
-    { id: 4, x: 1200, y: 1350, radius: 180 },
-    { id: 5, x: 300, y: 1250, radius: 180 }
-  ],
-  boostPads: [
-    { x: 750, y: 280, w: 100, h: 50, angle: 0 },
-    { x: 1650, y: 280, w: 100, h: 50, angle: 0 },
-    { x: 2150, y: 800, w: 50, h: 100, angle: Math.PI / 2 },
-    { x: 1650, y: 1320, w: 100, h: 50, angle: Math.PI },
-    { x: 750, y: 1320, w: 100, h: 50, angle: Math.PI },
-    { x: 280, y: 800, w: 50, h: 100, angle: -Math.PI / 2 }
-  ],
-  obstacles: [
-    // Center island obstacles
-    { x: 650, y: 550, w: 1100, h: 500, type: 'building' },
-    // Outer boundaries
-    { x: 0, y: 0, w: 2400, h: 60, type: 'wall' },
-    { x: 0, y: 1540, w: 2400, h: 60, type: 'wall' },
-    { x: 0, y: 0, w: 60, h: 1600, type: 'wall' },
-    { x: 2340, y: 0, w: 60, h: 1600, type: 'wall' }
-  ],
-  powerupSpawns: [
-    { x: 450, y: 300, type: 'rocket' },
-    { x: 1450, y: 260, type: 'nitro' },
-    { x: 2150, y: 600, type: 'shield' },
-    { x: 2050, y: 1300, type: 'laser' },
-    { x: 1000, y: 1350, type: 'repair' },
-    { x: 300, y: 1000, type: 'mine' },
-    { x: 1200, y: 800, type: 'rocket' } // Center shortcut
-  ]
+// Arena Size
+const MAP_WIDTH = 2600;
+const MAP_HEIGHT = 1800;
+
+// Map Obstacles / Walls / Buildings
+const OBSTACLES = [
+  // Outer Boundaries
+  { x: 0, y: 0, w: MAP_WIDTH, h: 40 },
+  { x: 0, y: MAP_HEIGHT - 40, w: MAP_WIDTH, h: 40 },
+  { x: 0, y: 0, w: 40, h: MAP_HEIGHT },
+  { x: MAP_WIDTH - 40, y: 0, w: 40, h: MAP_HEIGHT },
+
+  // Center Compound
+  { x: 1000, y: 650, w: 600, h: 500, type: 'bunker' },
+
+  // Corner Bunkers / Warehouses
+  { x: 250, y: 250, w: 350, h: 250, type: 'warehouse' },
+  { x: 2000, y: 250, w: 350, h: 250, type: 'warehouse' },
+  { x: 250, y: 1300, w: 350, h: 250, type: 'warehouse' },
+  { x: 2000, y: 1300, w: 350, h: 250, type: 'warehouse' },
+
+  // Tactical Barricades & Crates
+  { x: 800, y: 350, w: 120, h: 40 },
+  { x: 1680, y: 350, w: 120, h: 40 },
+  { x: 800, y: 1400, w: 120, h: 40 },
+  { x: 1680, y: 1400, w: 120, h: 40 },
+  { x: 500, y: 800, w: 40, h: 200 },
+  { x: 2060, y: 800, w: 40, h: 200 }
+];
+
+// Weapon Definitions
+const WEAPONS = {
+  assault: { name: 'Assault Rifle', damage: 24, fireRate: 110, spread: 0.05, magSize: 30, reloadTime: 1600, speed: 28, bulletCount: 1, color: '#00f0ff' },
+  shotgun: { name: 'Combat Shotgun', damage: 18, fireRate: 650, spread: 0.22, magSize: 8, reloadTime: 2200, speed: 24, bulletCount: 6, color: '#ffb703' },
+  sniper: { name: 'Heavy Sniper', damage: 95, fireRate: 1100, spread: 0.01, magSize: 5, reloadTime: 2500, speed: 45, bulletCount: 1, color: '#ff007f' },
+  plasma: { name: 'Plasma Launcher', damage: 70, fireRate: 700, spread: 0.04, magSize: 6, reloadTime: 2000, speed: 18, bulletCount: 1, isExplosive: true, color: '#00f59b' }
 };
 
-// Rooms Registry
 const rooms = new Map();
 
 function generateRoomCode() {
@@ -68,79 +64,61 @@ function generateRoomCode() {
   return rooms.has(code) ? generateRoomCode() : code;
 }
 
-// Vehicle Class & Physics
-class CombatCar {
-  constructor(id, name, color, isHost = false, isBot = false, spawnIndex = 0) {
+// Player Class
+class Survivor {
+  constructor(id, name, color, isHost = false, isBot = false) {
     this.id = id;
     this.name = name;
     this.color = color || '#00f0ff';
     this.isHost = isHost;
     this.isBot = isBot;
 
-    // Spawn Grid positioning
-    const spawnX = 250 + (spawnIndex % 2) * 80;
-    const spawnY = 320 + Math.floor(spawnIndex / 2) * 90;
-
-    this.x = spawnX;
-    this.y = spawnY;
-    this.angle = 0; // Radians
-    this.speed = 0;
-    this.maxSpeed = 12;
-    this.reverseMaxSpeed = -5;
-    this.accel = 0.35;
-    this.decel = 0.2;
-    this.handling = 0.055;
-    this.width = 38;
-    this.height = 22;
+    // Position & Movement
+    this.x = 400 + Math.random() * (MAP_WIDTH - 800);
+    this.y = 400 + Math.random() * (MAP_HEIGHT - 800);
+    this.angle = 0; // Aiming angle (radians)
+    this.vx = 0;
+    this.vy = 0;
+    this.baseSpeed = 6;
+    this.radius = 20;
 
     // Combat Stats
     this.maxHealth = 100;
     this.health = 100;
-    this.shield = 50;
-    this.maxShield = 50;
-    this.nitro = 100; // 0 to 100
-    this.maxNitro = 100;
-    this.isBoosting = false;
-    this.isDrifting = false;
-    this.isShooting = false;
+    this.maxArmor = 50;
+    this.armor = 50;
+    this.stamina = 100; // For Sprint/Slide
+    this.isSprinting = false;
+    this.isReloading = false;
+    this.reloadEnd = 0;
+
+    // Weapon Inventory
+    this.weapon = 'assault';
+    this.ammo = WEAPONS.assault.magSize;
     this.lastShotTime = 0;
-    this.weaponType = 'gatling'; // 'gatling', 'rocket', 'laser', 'mine'
-    this.ammo = Infinity;
-    this.specialAmmo = 3;
-
-    // Race Progress
-    this.lap = 1;
-    this.maxLaps = 3;
-    this.currentCheckpoint = 0;
-    this.finished = false;
-    this.finishTime = 0;
     this.kills = 0;
-    this.deaths = 0;
     this.score = 0;
+    this.deaths = 0;
 
-    // Input States
+    // Inputs
     this.inputs = {
-      up: false,
-      down: false,
-      left: false,
-      right: false,
-      boost: false,
-      shoot: false,
-      drift: false
+      up: false, down: false, left: false, right: false,
+      shoot: false, sprint: false, reload: false,
+      aimX: 0, aimY: 0
     };
 
-    // Bot AI variables
-    this.botTargetCheckpoint = 0;
-    this.botShootCooldown = 0;
+    // Bot AI
+    this.botTarget = null;
+    this.botChangeTargetTime = 0;
   }
 
-  respawn(spawnIndex = 0) {
+  respawn() {
     this.health = this.maxHealth;
-    this.shield = this.maxShield;
-    this.speed = 0;
-    const currentCP = TRACK.checkpoints[this.currentCheckpoint] || TRACK.checkpoints[0];
-    this.x = currentCP.x + (Math.random() - 0.5) * 60;
-    this.y = currentCP.y + (Math.random() - 0.5) * 60;
+    this.armor = this.maxArmor;
+    this.x = 400 + Math.random() * (MAP_WIDTH - 800);
+    this.y = 400 + Math.random() * (MAP_HEIGHT - 800);
+    this.ammo = WEAPONS[this.weapon].magSize;
+    this.isReloading = false;
   }
 
   update(room) {
@@ -150,195 +128,130 @@ class CombatCar {
       this.updateBotAI(room);
     }
 
-    // --- ACCELERATION & REVERSE ---
-    let currentMax = this.maxSpeed;
-    let currentAccel = this.accel;
+    // Aim Angle calculation
+    if (!this.isBot) {
+      this.angle = Math.atan2(this.inputs.aimY - this.y, this.inputs.aimX - this.x);
+    }
 
-    // Nitro Boost
-    if (this.inputs.boost && this.nitro > 0) {
-      this.isBoosting = true;
-      this.nitro = Math.max(0, this.nitro - 1.2);
-      currentMax *= 1.45;
-      currentAccel *= 1.8;
+    // Sprint & Stamina
+    let speed = this.baseSpeed;
+    if (this.inputs.sprint && this.stamina > 10) {
+      this.isSprinting = true;
+      speed *= 1.5;
+      this.stamina = Math.max(0, this.stamina - 1.2);
     } else {
-      this.isBoosting = false;
-      this.nitro = Math.min(this.maxNitro, this.nitro + 0.2); // Passive nitro regen
+      this.isSprinting = false;
+      this.stamina = Math.min(100, this.stamina + 0.6);
     }
 
-    if (this.inputs.up) {
-      this.speed = Math.min(currentMax, this.speed + currentAccel);
-    } else if (this.inputs.down) {
-      this.speed = Math.max(this.reverseMaxSpeed, this.speed - currentAccel * 0.8);
-    } else {
-      // Natural drag / friction
-      if (this.speed > 0) {
-        this.speed = Math.max(0, this.speed - this.decel);
-      } else if (this.speed < 0) {
-        this.speed = Math.min(0, this.speed + this.decel);
+    // Movement Vectors
+    let moveX = 0;
+    let moveY = 0;
+    if (this.inputs.up) moveY -= 1;
+    if (this.inputs.down) moveY += 1;
+    if (this.inputs.left) moveX -= 1;
+    if (this.inputs.right) moveX += 1;
+
+    if (moveX !== 0 && moveY !== 0) {
+      moveX *= 0.7071;
+      moveY *= 0.7071;
+    }
+
+    const newX = this.x + moveX * speed;
+    const newY = this.y + moveY * speed;
+
+    // Obstacle Collisions
+    if (!this.checkWallCollision(newX, this.y)) this.x = newX;
+    if (!this.checkWallCollision(this.x, newY)) this.y = newY;
+
+    // Boundary clamps
+    this.x = Math.max(50, Math.min(MAP_WIDTH - 50, this.x));
+    this.y = Math.max(50, Math.min(MAP_HEIGHT - 50, this.y));
+
+    // Reloading
+    const wp = WEAPONS[this.weapon];
+    if (this.inputs.reload && !this.isReloading && this.ammo < wp.magSize) {
+      this.startReload();
+    }
+
+    if (this.isReloading && Date.now() >= this.reloadEnd) {
+      this.ammo = wp.magSize;
+      this.isReloading = false;
+    }
+
+    // Auto-reload when empty
+    if (this.ammo <= 0 && !this.isReloading) {
+      this.startReload();
+    }
+
+    // Shooting
+    if (this.inputs.shoot && !this.isReloading && this.ammo > 0) {
+      if (Date.now() - this.lastShotTime >= wp.fireRate) {
+        this.fireWeapon(room);
       }
-    }
-
-    // --- STEERING & DRIFTING ---
-    let turnRate = this.handling * (Math.abs(this.speed) / this.maxSpeed + 0.3);
-    if (this.inputs.drift && Math.abs(this.speed) > 4) {
-      this.isDrifting = true;
-      turnRate *= 1.4;
-      this.speed *= 0.985; // Slight drift friction
-    } else {
-      this.isDrifting = false;
-    }
-
-    if (this.inputs.left) {
-      this.angle -= turnRate * (this.speed >= 0 ? 1 : -1);
-    }
-    if (this.inputs.right) {
-      this.angle += turnRate * (this.speed >= 0 ? 1 : -1);
-    }
-
-    // Move Car
-    this.x += Math.cos(this.angle) * this.speed;
-    this.y += Math.sin(this.angle) * this.speed;
-
-    // Boundary constraints
-    this.x = Math.max(80, Math.min(TRACK.width - 80, this.x));
-    this.y = Math.max(80, Math.min(TRACK.height - 80, this.y));
-
-    // Obstacle Wall Collisions
-    TRACK.obstacles.forEach(obs => {
-      if (
-        this.x > obs.x &&
-        this.x < obs.x + obs.w &&
-        this.y > obs.y &&
-        this.y < obs.y + obs.h
-      ) {
-        // Bounce back
-        this.speed = -this.speed * 0.5;
-        this.x -= Math.cos(this.angle) * 8;
-        this.y -= Math.sin(this.angle) * 8;
-        this.takeDamage(5, null, room);
-      }
-    });
-
-    // Boost Pad Collisions
-    TRACK.boostPads.forEach(pad => {
-      const dx = this.x - pad.x;
-      const dy = this.y - pad.y;
-      if (Math.abs(dx) < 60 && Math.abs(dy) < 60) {
-        this.speed = this.maxSpeed * 1.6;
-        this.nitro = Math.min(this.maxNitro, this.nitro + 20);
-      }
-    });
-
-    // Checkpoint & Lap Progress
-    const targetCP = TRACK.checkpoints[this.currentCheckpoint];
-    if (targetCP) {
-      const distToCP = Math.hypot(this.x - targetCP.x, this.y - targetCP.y);
-      if (distToCP < targetCP.radius) {
-        this.currentCheckpoint++;
-        if (this.currentCheckpoint >= TRACK.checkpoints.length) {
-          this.currentCheckpoint = 0;
-          this.lap++;
-          if (this.lap > this.maxLaps && !this.finished) {
-            this.finished = true;
-            this.finishTime = Date.now() - room.gameStartTime;
-            room.checkGameCompletion();
-          }
-        }
-      }
-    }
-
-    // Shooting Action
-    if (this.inputs.shoot && Date.now() - this.lastShotTime > 180) {
-      this.fireWeapon(room);
     }
   }
 
-  updateBotAI(room) {
-    const targetCP = TRACK.checkpoints[this.botTargetCheckpoint];
-    if (targetCP) {
-      const targetAngle = Math.atan2(targetCP.y - this.y, targetCP.x - this.x);
-      let diffAngle = targetAngle - this.angle;
-      while (diffAngle < -Math.PI) diffAngle += Math.PI * 2;
-      while (diffAngle > Math.PI) diffAngle -= Math.PI * 2;
-
-      this.inputs.up = true;
-      this.inputs.left = diffAngle < -0.15;
-      this.inputs.right = diffAngle > 0.15;
-      this.inputs.boost = Math.abs(diffAngle) < 0.2 && Math.random() > 0.4;
-      this.inputs.drift = Math.abs(diffAngle) > 0.8;
-
-      const dist = Math.hypot(targetCP.x - this.x, targetCP.y - this.y);
-      if (dist < 200) {
-        this.botTargetCheckpoint = (this.botTargetCheckpoint + 1) % TRACK.checkpoints.length;
-      }
-    }
-
-    // Bot Auto-Shoot at closest opponent
-    if (Date.now() > this.botShootCooldown) {
-      let closestOpponent = null;
-      let closestDist = 500;
-      room.cars.forEach(other => {
-        if (other.id !== this.id && other.health > 0) {
-          const d = Math.hypot(other.x - this.x, other.y - this.y);
-          if (d < closestDist) {
-            closestDist = d;
-            closestOpponent = other;
-          }
-        }
-      });
-
-      if (closestOpponent) {
-        const oppAngle = Math.atan2(closestOpponent.y - this.y, closestOpponent.x - this.x);
-        let angleDiff = oppAngle - this.angle;
-        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-
-        if (Math.abs(angleDiff) < 0.35) {
-          this.inputs.shoot = true;
-          this.botShootCooldown = Date.now() + 600 + Math.random() * 800;
-        } else {
-          this.inputs.shoot = false;
-        }
-      }
-    }
+  startReload() {
+    this.isReloading = true;
+    this.reloadEnd = Date.now() + WEAPONS[this.weapon].reloadTime;
   }
 
   fireWeapon(room) {
+    const wp = WEAPONS[this.weapon];
     this.lastShotTime = Date.now();
-    const muzzleX = this.x + Math.cos(this.angle) * (this.width / 2 + 5);
-    const muzzleY = this.y + Math.sin(this.angle) * (this.width / 2 + 5);
+    this.ammo--;
 
-    if (this.weaponType === 'rocket' && this.specialAmmo > 0) {
-      this.specialAmmo--;
-      room.projectiles.push(new Projectile(this.id, muzzleX, muzzleY, this.angle, 'rocket', 18, 45, this.color));
-      if (this.specialAmmo <= 0) this.weaponType = 'gatling';
-    } else if (this.weaponType === 'laser' && this.specialAmmo > 0) {
-      this.specialAmmo--;
-      room.projectiles.push(new Projectile(this.id, muzzleX, muzzleY, this.angle, 'laser', 26, 60, '#ff007f'));
-      if (this.specialAmmo <= 0) this.weaponType = 'gatling';
-    } else if (this.weaponType === 'mine' && this.specialAmmo > 0) {
-      this.specialAmmo--;
-      const rearX = this.x - Math.cos(this.angle) * 30;
-      const rearY = this.y - Math.sin(this.angle) * 30;
-      room.projectiles.push(new Projectile(this.id, rearX, rearY, 0, 'mine', 0, 75, '#ffb703'));
-      if (this.specialAmmo <= 0) this.weaponType = 'gatling';
-    } else {
-      // Standard Plasma Gatling
-      room.projectiles.push(new Projectile(this.id, muzzleX, muzzleY, this.angle + (Math.random() - 0.5) * 0.08, 'bullet', 22, 12, this.color));
+    const muzzleDist = 28;
+    const muzzleX = this.x + Math.cos(this.angle) * muzzleDist;
+    const muzzleY = this.y + Math.sin(this.angle) * muzzleDist;
+
+    for (let i = 0; i < wp.bulletCount; i++) {
+      const spread = (Math.random() - 0.5) * wp.spread * 2;
+      const bulletAngle = this.angle + spread;
+      room.projectiles.push(new Projectile(
+        this.id,
+        muzzleX,
+        muzzleY,
+        bulletAngle,
+        this.weapon,
+        wp.speed,
+        wp.damage,
+        wp.color,
+        wp.isExplosive
+      ));
     }
 
-    room.events.push({ type: 'shoot', x: muzzleX, y: muzzleY, weapon: this.weaponType, color: this.color });
+    room.events.push({
+      type: 'shoot',
+      x: muzzleX,
+      y: muzzleY,
+      weapon: this.weapon,
+      angle: this.angle
+    });
+  }
+
+  checkWallCollision(x, y) {
+    for (const obs of OBSTACLES) {
+      if (
+        x + this.radius > obs.x &&
+        x - this.radius < obs.x + obs.w &&
+        y + this.radius > obs.y &&
+        y - this.radius < obs.y + obs.h
+      ) {
+        return true;
+      }
+    }
+    return false;
   }
 
   takeDamage(amount, attackerId, room) {
     if (this.health <= 0) return;
 
-    if (this.shield > 0) {
-      const remaining = amount - this.shield;
-      this.shield = Math.max(0, this.shield - amount);
-      if (remaining > 0) {
-        this.health = Math.max(0, this.health - remaining);
-      }
+    if (this.armor > 0) {
+      const remain = amount - this.armor;
+      this.armor = Math.max(0, this.armor - amount);
+      if (remain > 0) this.health = Math.max(0, this.health - remain);
     } else {
       this.health = Math.max(0, this.health - amount);
     }
@@ -348,148 +261,273 @@ class CombatCar {
     if (this.health <= 0) {
       this.deaths++;
       if (attackerId) {
-        const attacker = room.cars.get(attackerId);
-        if (attacker) {
-          attacker.kills++;
-          attacker.score += 500;
+        const killer = room.players.get(attackerId);
+        if (killer) {
+          killer.kills++;
+          killer.score += 100;
           room.events.push({
             type: 'kill',
-            killerName: attacker.name,
+            killerName: killer.name,
             victimName: this.name,
-            weapon: attacker.weaponType
+            weapon: killer.weapon
           });
         }
       }
-      room.events.push({ type: 'explosion', x: this.x, y: this.y });
+      room.events.push({ type: 'death', x: this.x, y: this.y });
 
-      // Respawn after 2.5 seconds
       setTimeout(() => {
-        if (room.state === 'PLAYING') {
-          this.respawn();
+        if (room.state === 'PLAYING') this.respawn();
+      }, 3000);
+    }
+  }
+
+  updateBotAI(room) {
+    // Find closest enemy player or zombie
+    let closestTarget = null;
+    let closestDist = 900;
+
+    room.players.forEach(other => {
+      if (other.id !== this.id && other.health > 0) {
+        const d = Math.hypot(other.x - this.x, other.y - this.y);
+        if (d < closestDist) {
+          closestDist = d;
+          closestTarget = other;
         }
-      }, 2500);
+      }
+    });
+
+    if (closestTarget) {
+      this.angle = Math.atan2(closestTarget.y - this.y, closestTarget.x - this.x);
+
+      // Move toward or strafe
+      if (closestDist > 300) {
+        this.inputs.up = true;
+        this.inputs.down = false;
+      } else if (closestDist < 120) {
+        this.inputs.up = false;
+        this.inputs.down = true;
+      } else {
+        this.inputs.up = false;
+        this.inputs.down = false;
+      }
+
+      this.inputs.left = Math.random() > 0.6;
+      this.inputs.right = !this.inputs.left && Math.random() > 0.6;
+      this.inputs.shoot = closestDist < 600;
+    } else {
+      // Wander around map
+      this.inputs.up = true;
+      this.inputs.shoot = false;
+      if (Math.random() > 0.96) {
+        this.angle += (Math.random() - 0.5) * 1.5;
+      }
     }
   }
 }
 
 // Projectile Class
 class Projectile {
-  constructor(ownerId, x, y, angle, type, speed, damage, color) {
+  constructor(ownerId, x, y, angle, weaponType, speed, damage, color, isExplosive = false) {
     this.id = Math.random().toString(36).substr(2, 6);
     this.ownerId = ownerId;
     this.x = x;
     this.y = y;
     this.angle = angle;
-    this.type = type;
+    this.weaponType = weaponType;
     this.speed = speed;
     this.damage = damage;
-    this.color = color || '#00f0ff';
-    this.radius = type === 'mine' ? 14 : (type === 'rocket' ? 8 : 4);
-    this.life = type === 'mine' ? 600 : 90; // frames to live
-    this.createdAt = Date.now();
+    this.color = color;
+    this.isExplosive = isExplosive;
+    this.life = 75; // frames to live
   }
 
   update(room) {
     this.life--;
     if (this.life <= 0) return false;
 
-    if (this.type !== 'mine') {
-      this.x += Math.cos(this.angle) * this.speed;
-      this.y += Math.sin(this.angle) * this.speed;
-    }
+    this.x += Math.cos(this.angle) * this.speed;
+    this.y += Math.sin(this.angle) * this.speed;
 
-    // Check Wall Collisions
-    for (const obs of TRACK.obstacles) {
+    // Obstacle collision
+    for (const obs of OBSTACLES) {
       if (this.x > obs.x && this.x < obs.x + obs.w && this.y > obs.y && this.y < obs.y + obs.h) {
-        room.events.push({ type: 'explosion', x: this.x, y: this.y, radius: 20 });
+        if (this.isExplosive) {
+          this.explode(room);
+        }
         return false;
       }
     }
 
-    // Check Car Collisions
-    for (const car of room.cars.values()) {
-      if (car.id !== this.ownerId && car.health > 0) {
-        const dist = Math.hypot(car.x - this.x, car.y - this.y);
-        if (dist < car.width / 2 + this.radius) {
-          car.takeDamage(this.damage, this.ownerId, room);
-          car.speed *= 0.6; // Impact knockback / stun
-          room.events.push({ type: 'explosion', x: this.x, y: this.y, radius: this.type === 'rocket' ? 40 : 15 });
+    // Player collision
+    for (const p of room.players.values()) {
+      if (p.id !== this.ownerId && p.health > 0) {
+        if (Math.hypot(p.x - this.x, p.y - this.y) < p.radius + 6) {
+          p.takeDamage(this.damage, this.ownerId, room);
+          if (this.isExplosive) this.explode(room);
           return false;
         }
       }
     }
 
+    // Zombie collision (if in Horde mode)
+    for (const z of room.zombies) {
+      if (z.health > 0 && Math.hypot(z.x - this.x, z.y - this.y) < z.radius + 6) {
+        z.takeDamage(this.damage, this.ownerId, room);
+        if (this.isExplosive) this.explode(room);
+        return false;
+      }
+    }
+
     return true;
+  }
+
+  explode(room) {
+    room.events.push({ type: 'explosion', x: this.x, y: this.y, radius: 100 });
+    room.players.forEach(p => {
+      const d = Math.hypot(p.x - this.x, p.y - this.y);
+      if (d < 120 && p.health > 0) {
+        p.takeDamage(Math.floor((1 - d / 120) * 80), this.ownerId, room);
+      }
+    });
+    room.zombies.forEach(z => {
+      const d = Math.hypot(z.x - this.x, z.y - this.y);
+      if (d < 120 && z.health > 0) {
+        z.takeDamage(Math.floor((1 - d / 120) * 100), this.ownerId, room);
+      }
+    });
   }
 }
 
-// Powerup Spawner Manager
-class PowerupItem {
-  constructor(x, y, type) {
+// Zombie Class (for Deadrise / Horde Mode)
+class Zombie {
+  constructor(x, y, wave = 1) {
+    this.id = Math.random().toString(36).substr(2, 6);
     this.x = x;
     this.y = y;
-    this.type = type; // 'rocket', 'laser', 'nitro', 'shield', 'repair', 'mine'
-    this.active = true;
-    this.respawnTimer = 0;
+    this.angle = 0;
+    this.speed = 2.8 + Math.random() * 1.5 + (wave * 0.2);
+    this.health = 50 + wave * 15;
+    this.maxHealth = this.health;
+    this.damage = 18;
+    this.radius = 18;
+    this.lastAttack = 0;
+    this.color = '#ff3366';
   }
 
-  collect(car) {
-    this.active = false;
-    this.respawnTimer = 600; // 10 seconds at 60fps
+  update(room) {
+    if (this.health <= 0) return;
 
-    switch (this.type) {
-      case 'rocket':
-        car.weaponType = 'rocket';
-        car.specialAmmo = 4;
-        break;
-      case 'laser':
-        car.weaponType = 'laser';
-        car.specialAmmo = 5;
-        break;
-      case 'mine':
-        car.weaponType = 'mine';
-        car.specialAmmo = 3;
-        break;
-      case 'nitro':
-        car.nitro = car.maxNitro;
-        break;
-      case 'shield':
-        car.shield = car.maxShield;
-        break;
-      case 'repair':
-        car.health = Math.min(car.maxHealth, car.health + 50);
-        break;
+    // Target closest live player
+    let closestPlayer = null;
+    let minDist = Infinity;
+
+    room.players.forEach(p => {
+      if (p.health > 0) {
+        const d = Math.hypot(p.x - this.x, p.y - this.y);
+        if (d < minDist) {
+          minDist = d;
+          closestPlayer = p;
+        }
+      }
+    });
+
+    if (closestPlayer) {
+      this.angle = Math.atan2(closestPlayer.y - this.y, closestPlayer.x - this.x);
+      const newX = this.x + Math.cos(this.angle) * this.speed;
+      const newY = this.y + Math.sin(this.angle) * this.speed;
+
+      this.x = newX;
+      this.y = newY;
+
+      // Attack player on contact
+      if (minDist < this.radius + closestPlayer.radius + 4) {
+        if (Date.now() - this.lastAttack > 800) {
+          this.lastAttack = Date.now();
+          closestPlayer.takeDamage(this.damage, null, room);
+        }
+      }
+    }
+  }
+
+  takeDamage(amount, attackerId, room) {
+    this.health -= amount;
+    room.events.push({ type: 'hit', x: this.x, y: this.y, amount });
+
+    if (this.health <= 0) {
+      if (attackerId) {
+        const killer = room.players.get(attackerId);
+        if (killer) {
+          killer.score += 50;
+          killer.kills++;
+        }
+      }
+      room.events.push({ type: 'zombie_death', x: this.x, y: this.y });
     }
   }
 }
 
-// Game Room Management
+// Power-up Crate / Drop
+class PowerupItem {
+  constructor(x, y, type) {
+    this.x = x;
+    this.y = y;
+    this.type = type; // 'shotgun', 'sniper', 'plasma', 'medkit', 'armor'
+    this.active = true;
+    this.respawnTimer = 0;
+  }
+
+  collect(player) {
+    this.active = false;
+    this.respawnTimer = 450; // ~10s
+
+    if (['shotgun', 'sniper', 'plasma'].includes(this.type)) {
+      player.weapon = this.type;
+      player.ammo = WEAPONS[this.type].magSize;
+    } else if (this.type === 'medkit') {
+      player.health = Math.min(player.maxHealth, player.health + 60);
+    } else if (this.type === 'armor') {
+      player.armor = player.maxArmor;
+    }
+  }
+}
+
+// Game Room Manager
 class GameRoom {
   constructor(code, hostSocketId) {
     this.code = code;
     this.hostId = hostSocketId;
-    this.state = 'LOBBY'; // LOBBY, COUNTDOWN, PLAYING, GAMEOVER
-    this.gameMode = 'DEATH_RACE'; // 'DEATH_RACE' or 'DEMOLITION_ARENA'
-    this.cars = new Map();
+    this.state = 'LOBBY';
+    this.mode = 'DEADSHOT_PVP'; // 'DEADSHOT_PVP' or 'DEADRISE_HORDE'
+    this.players = new Map();
     this.projectiles = [];
-    this.powerups = TRACK.powerupSpawns.map(p => new PowerupItem(p.x, p.y, p.type));
+    this.zombies = [];
+    this.wave = 1;
     this.events = [];
-    this.gameStartTime = 0;
     this.gameLoopInterval = null;
-    this.countdown = 3;
+    this.matchTimeLeft = 300; // 5 minute rounds
+
+    // Initial power-up spawns
+    this.powerups = [
+      new PowerupItem(1300, 900, 'plasma'),
+      new PowerupItem(425, 375, 'shotgun'),
+      new PowerupItem(2175, 375, 'sniper'),
+      new PowerupItem(425, 1425, 'medkit'),
+      new PowerupItem(2175, 1425, 'armor'),
+      new PowerupItem(1300, 350, 'medkit'),
+      new PowerupItem(1300, 1450, 'armor')
+    ];
   }
 
   addPlayer(id, name, color, isHost = false, isBot = false) {
-    const spawnIndex = this.cars.size;
-    const car = new CombatCar(id, name, color, isHost, isBot, spawnIndex);
-    this.cars.set(id, car);
-    return car;
+    const player = new Survivor(id, name, color, isHost, isBot);
+    this.players.set(id, player);
+    return player;
   }
 
   removePlayer(id) {
-    this.cars.delete(id);
+    this.players.delete(id);
     if (this.hostId === id) {
-      const next = Array.from(this.cars.values()).find(c => !c.isBot);
+      const next = Array.from(this.players.values()).find(p => !p.isBot);
       if (next) {
         this.hostId = next.id;
         next.isHost = true;
@@ -498,122 +536,113 @@ class GameRoom {
   }
 
   startGame(io) {
-    this.state = 'COUNTDOWN';
-    this.countdown = 3;
+    this.state = 'PLAYING';
+    this.matchTimeLeft = 300;
     this.projectiles = [];
-    this.events = [];
+    this.zombies = [];
+    this.wave = 1;
 
-    // Reset cars to starting grid
-    let idx = 0;
-    this.cars.forEach(car => {
-      car.health = car.maxHealth;
-      car.shield = car.maxShield;
-      car.nitro = car.maxNitro;
-      car.lap = 1;
-      car.currentCheckpoint = 0;
-      car.finished = false;
-      car.score = 0;
-      car.kills = 0;
-      car.deaths = 0;
-      car.x = 250 + (idx % 2) * 80;
-      car.y = 320 + Math.floor(idx / 2) * 90;
-      car.angle = 0;
-      car.speed = 0;
-      idx++;
-    });
+    this.players.forEach(p => p.respawn());
 
-    io.to(this.code).emit('countdown_start', { countdown: this.countdown });
+    if (this.mode === 'DEADRISE_HORDE') {
+      this.spawnZombieWave();
+    }
 
-    const countInterval = setInterval(() => {
-      this.countdown--;
-      io.to(this.code).emit('countdown_tick', { countdown: this.countdown });
-      if (this.countdown <= 0) {
-        clearInterval(countInterval);
-        this.state = 'PLAYING';
-        this.gameStartTime = Date.now();
-        this.runGameLoop(io);
-      }
-    }, 1000);
-  }
-
-  runGameLoop(io) {
     if (this.gameLoopInterval) clearInterval(this.gameLoopInterval);
 
     this.gameLoopInterval = setInterval(() => {
-      if (this.state !== 'PLAYING') {
-        clearInterval(this.gameLoopInterval);
-        return;
-      }
-
-      // Update Cars
-      this.cars.forEach(car => car.update(this));
-
-      // Update Projectiles
-      this.projectiles = this.projectiles.filter(proj => proj.update(this));
-
-      // Update Powerups
-      this.powerups.forEach(p => {
-        if (!p.active) {
-          p.respawnTimer--;
-          if (p.respawnTimer <= 0) p.active = true;
-        } else {
-          // Check collision with cars
-          for (const car of this.cars.values()) {
-            if (car.health > 0 && Math.hypot(car.x - p.x, car.y - p.y) < 35) {
-              p.collect(car);
-              this.events.push({ type: 'powerup', x: p.x, y: p.y, powerType: p.type, playerId: car.id });
-              break;
-            }
-          }
-        }
-      });
-
-      // Broadcast Snapshot at 30-60Hz
-      const snapshot = this.getSnapshot();
-      io.to(this.code).emit('game_tick', snapshot);
-      this.events = []; // Flush frame events
-    }, 1000 / 45); // 45 FPS authoritative tick
+      this.updateLoop(io);
+    }, 1000 / 45); // 45 FPS Engine Loop
   }
 
-  checkGameCompletion() {
-    const finishedCount = Array.from(this.cars.values()).filter(c => c.finished).length;
-    if (finishedCount >= 1 && this.cars.size <= 2 || finishedCount >= Math.ceil(this.cars.size * 0.7)) {
-      this.state = 'GAMEOVER';
-      if (this.gameLoopInterval) clearInterval(this.gameLoopInterval);
-      io.to(this.code).emit('game_over', this.getLeaderboard());
+  spawnZombieWave() {
+    const zombieCount = 8 + this.wave * 4;
+    for (let i = 0; i < zombieCount; i++) {
+      const spawnX = Math.random() > 0.5 ? 80 : MAP_WIDTH - 80;
+      const spawnY = Math.random() * MAP_HEIGHT;
+      this.zombies.push(new Zombie(spawnX, spawnY, this.wave));
     }
+  }
+
+  updateLoop(io) {
+    if (this.state !== 'PLAYING') {
+      clearInterval(this.gameLoopInterval);
+      return;
+    }
+
+    // Update Players
+    this.players.forEach(p => p.update(this));
+
+    // Update Projectiles
+    this.projectiles = this.projectiles.filter(proj => proj.update(this));
+
+    // Update Zombies (Horde mode)
+    this.zombies = this.zombies.filter(z => z.health > 0);
+    this.zombies.forEach(z => z.update(this));
+
+    if (this.mode === 'DEADRISE_HORDE' && this.zombies.length === 0) {
+      this.wave++;
+      this.events.push({ type: 'wave_clear', wave: this.wave });
+      setTimeout(() => this.spawnZombieWave(), 3000);
+    }
+
+    // Update Powerups
+    this.powerups.forEach(p => {
+      if (!p.active) {
+        p.respawnTimer--;
+        if (p.respawnTimer <= 0) p.active = true;
+      } else {
+        for (const player of this.players.values()) {
+          if (player.health > 0 && Math.hypot(player.x - p.x, player.y - p.y) < player.radius + 18) {
+            p.collect(player);
+            this.events.push({ type: 'powerup', x: p.x, y: p.y, item: p.type, playerId: player.id });
+            break;
+          }
+        }
+      }
+    });
+
+    // Broadcast Snapshot
+    const snapshot = this.getSnapshot();
+    io.to(this.code).emit('game_tick', snapshot);
+    this.events = [];
   }
 
   getSnapshot() {
     return {
       state: this.state,
-      cars: Array.from(this.cars.values()).map(c => ({
-        id: c.id,
-        name: c.name,
-        color: c.color,
-        x: Math.round(c.x),
-        y: Math.round(c.y),
-        angle: Number(c.angle.toFixed(3)),
-        speed: Number(c.speed.toFixed(1)),
-        health: Math.round(c.health),
-        shield: Math.round(c.shield),
-        nitro: Math.round(c.nitro),
-        isBoosting: c.isBoosting,
-        isDrifting: c.isDrifting,
-        weaponType: c.weaponType,
-        specialAmmo: c.specialAmmo,
-        lap: c.lap,
-        currentCheckpoint: c.currentCheckpoint,
-        kills: c.kills,
-        finished: c.finished
-      })),
-      projectiles: this.projectiles.map(p => ({
+      mode: this.mode,
+      wave: this.wave,
+      players: Array.from(this.players.values()).map(p => ({
         id: p.id,
+        name: p.name,
+        color: p.color,
         x: Math.round(p.x),
         y: Math.round(p.y),
-        angle: Number(p.angle.toFixed(2)),
-        type: p.type,
-        color: p.color
+        angle: Number(p.angle.toFixed(3)),
+        health: Math.round(p.health),
+        armor: Math.round(p.armor),
+        stamina: Math.round(p.stamina),
+        weapon: p.weapon,
+        ammo: p.ammo,
+        isReloading: p.isReloading,
+        kills: p.kills,
+        score: p.score
+      })),
+      projectiles: this.projectiles.map(pr => ({
+        id: pr.id,
+        x: Math.round(pr.x),
+        y: Math.round(pr.y),
+        color: pr.color,
+        weaponType: pr.weaponType
+      })),
+      zombies: this.zombies.map(z => ({
+        id: z.id,
+        x: Math.round(z.x),
+        y: Math.round(z.y),
+        angle: Number(z.angle.toFixed(2)),
+        health: z.health,
+        maxHealth: z.maxHealth
       })),
       powerups: this.powerups.map(p => ({
         x: p.x,
@@ -624,124 +653,113 @@ class GameRoom {
       events: this.events
     };
   }
-
-  getLeaderboard() {
-    return Array.from(this.cars.values())
-      .sort((a, b) => {
-        if (a.finished && !b.finished) return -1;
-        if (!a.finished && b.finished) return 1;
-        if (a.finished && b.finished) return a.finishTime - b.finishTime;
-        if (a.lap !== b.lap) return b.lap - a.lap;
-        if (a.currentCheckpoint !== b.currentCheckpoint) return b.currentCheckpoint - a.currentCheckpoint;
-        return b.kills - a.kills;
-      })
-      .map((c, rank) => ({
-        rank: rank + 1,
-        id: c.id,
-        name: c.name,
-        color: c.color,
-        kills: c.kills,
-        lap: c.lap,
-        finishTime: c.finishTime ? (c.finishTime / 1000).toFixed(2) + 's' : 'DNF'
-      }));
-  }
 }
 
-// Socket IO Handlers
+// Socket Connection Events
 io.on('connection', (socket) => {
   let currentRoomCode = null;
 
-  socket.on('create_room', ({ playerName, carColor }) => {
+  // 1. Create Room
+  socket.on('create_room', ({ playerName, playerColor, gameMode }) => {
     const code = generateRoomCode();
     const room = new GameRoom(code, socket.id);
+    if (gameMode) room.mode = gameMode;
     rooms.set(code, room);
     currentRoomCode = code;
 
     socket.join(code);
-    const car = room.addPlayer(socket.id, playerName || 'Player 1', carColor || '#00f0ff', true);
+    const p = room.addPlayer(socket.id, playerName || 'Striker_1', playerColor || '#00f0ff', true);
 
     socket.emit('room_created', {
       roomCode: code,
-      player: { id: car.id, name: car.name, color: car.color, isHost: true },
-      track: TRACK
+      player: { id: p.id, name: p.name, color: p.color, isHost: true },
+      mode: room.mode,
+      map: { width: MAP_WIDTH, height: MAP_HEIGHT, obstacles: OBSTACLES }
     });
   });
 
-  socket.on('join_room', ({ roomCode, playerName, carColor }) => {
+  // 2. Join Room (Direct or via shared link ?room=CODE)
+  socket.on('join_room', ({ roomCode, playerName, playerColor }) => {
     const cleanCode = (roomCode || '').toUpperCase().trim();
     const room = rooms.get(cleanCode);
 
     if (!room) {
-      socket.emit('join_error', { message: 'Invalid Room Code! Please check and try again.' });
-      return;
-    }
-
-    if (room.state !== 'LOBBY') {
-      socket.emit('join_error', { message: 'Battle already in progress! Please wait for next race.' });
+      socket.emit('join_error', { message: 'Invalid Match Code! Please check link or code.' });
       return;
     }
 
     currentRoomCode = cleanCode;
     socket.join(cleanCode);
-    const car = room.addPlayer(socket.id, playerName || `Racer_${room.cars.size + 1}`, carColor || '#ff007f', false);
+    const p = room.addPlayer(socket.id, playerName || `Shooter_${room.players.size + 1}`, playerColor || '#ff007f', false);
 
     socket.emit('room_joined', {
       roomCode: cleanCode,
-      player: { id: car.id, name: car.name, color: car.color, isHost: false },
-      track: TRACK
+      player: { id: p.id, name: p.name, color: p.color, isHost: false },
+      mode: room.mode,
+      map: { width: MAP_WIDTH, height: MAP_HEIGHT, obstacles: OBSTACLES }
     });
 
-    io.to(cleanCode).emit('player_joined_lobby', {
-      players: Array.from(room.cars.values()).map(c => ({ id: c.id, name: c.name, color: c.color, isBot: c.isBot, isHost: c.isHost }))
+    io.to(cleanCode).emit('lobby_update', {
+      players: Array.from(room.players.values()).map(pl => ({ id: pl.id, name: pl.name, color: pl.color, isBot: pl.isBot, isHost: pl.isHost }))
     });
+
+    // If game already running, automatically drop the joined player into the live battle
+    if (room.state === 'PLAYING') {
+      socket.emit('game_started');
+    }
   });
 
+  // 3. Add AI Combat Bot
   socket.on('add_bot', () => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
-    if (!room || room.hostId !== socket.id || room.state !== 'LOBBY') return;
+    if (!room || room.hostId !== socket.id) return;
 
-    const botNames = ['CyberViper', 'NeonBlaze', 'DoomBuggy', 'PlasmaPhantom', 'TurboTitan'];
-    const botColors = ['#ff3366', '#ffb703', '#00f59b', '#b5179e', '#7209b7'];
-    const botIdx = room.cars.size;
-    const name = botNames[botIdx % botNames.length];
-    const color = botColors[botIdx % botColors.length];
+    const botNames = ['ShadowGhost', 'ApexSniper', 'Vortex99', 'NovaStrike', 'DoomReaper'];
+    const botColors = ['#ff3366', '#ffb703', '#00f59b', '#9d4edd', '#ff007f'];
+    const bName = botNames[room.players.size % botNames.length];
+    const bColor = botColors[room.players.size % botColors.length];
 
-    room.addPlayer(`bot_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`, `🤖 ${name}`, color, false, true);
+    room.addPlayer(`bot_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`, `🤖 ${bName}`, bColor, false, true);
 
-    io.to(currentRoomCode).emit('player_joined_lobby', {
-      players: Array.from(room.cars.values()).map(c => ({ id: c.id, name: c.name, color: c.color, isBot: c.isBot, isHost: c.isHost }))
+    io.to(currentRoomCode).emit('lobby_update', {
+      players: Array.from(room.players.values()).map(pl => ({ id: pl.id, name: pl.name, color: pl.color, isBot: pl.isBot, isHost: pl.isHost }))
     });
   });
 
+  // 4. Start Game
   socket.on('start_game', () => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room || room.hostId !== socket.id) return;
+
     room.startGame(io);
+    io.to(currentRoomCode).emit('game_started');
   });
 
+  // 5. Player Inputs (Movement, Aim, Shoot, Sprint, Reload)
   socket.on('player_input', (inputs) => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room) return;
-    const car = room.cars.get(socket.id);
-    if (car) {
-      car.inputs = { ...car.inputs, ...inputs };
+    const player = room.players.get(socket.id);
+    if (player) {
+      player.inputs = { ...player.inputs, ...inputs };
     }
   });
 
+  // Disconnect
   socket.on('disconnect', () => {
     if (currentRoomCode) {
       const room = rooms.get(currentRoomCode);
       if (room) {
         room.removePlayer(socket.id);
-        if (room.cars.size === 0) {
+        if (room.players.size === 0) {
           if (room.gameLoopInterval) clearInterval(room.gameLoopInterval);
           rooms.delete(currentRoomCode);
         } else {
-          io.to(currentRoomCode).emit('player_joined_lobby', {
-            players: Array.from(room.cars.values()).map(c => ({ id: c.id, name: c.name, color: c.color, isBot: c.isBot, isHost: c.isHost }))
+          io.to(currentRoomCode).emit('lobby_update', {
+            players: Array.from(room.players.values()).map(pl => ({ id: pl.id, name: pl.name, color: pl.color, isBot: pl.isBot, isHost: pl.isHost }))
           });
         }
       }
@@ -750,5 +768,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`🏎️💥 CYBER NITRO: COMBAT RACER Server running on http://localhost:${PORT}`);
+  console.log(`🎯 DEADSHOT / DEADRISE .IO Shooter running on http://localhost:${PORT}`);
 });
