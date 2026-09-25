@@ -3,76 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>DEADRISE.IO - Multiplayer Combat & Zombie Shooter</title>
-  <meta name="description" content="Fast-paced .io multiplayer shooter. Battle players in PvP Deathmatch or survive endless Zombie waves in Co-op Deadrise!" />
+  <title>DEADRISE.IO - 3D Multiplayer FPS Zombie Shooter</title>
+  <meta name="description" content="3D First-Person Zombie Shooter. Survive relentless mutant hordes with your squad in real-time!" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Chakra+Petch:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Chakra+Petch:wght@600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
+  <!-- Three.js 3D WebGL Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
   <div id="game-app">
     
-    <!-- Custom Crosshair -->
-    <div id="custom-crosshair"></div>
-
     <!-- ================= 1. HOME / MENU SCREEN ================= -->
     <section id="screen-home" class="screen active">
       <div class="menu-container">
         <header class="game-header">
-          <div class="badge-tag">🔥 MULTIPLAYER .IO ACTION SHOOTER 🔥</div>
-          <h1 class="glitch-title" data-text="DEADRISE.IO">DEADRISE.IO</h1>
-          <p class="tagline">SURVIVE THE APOCALYPSE OR DOMINATE THE ARENA</p>
+          <div class="badge-tag">🔥 3D FIRST-PERSON MULTIPLAYER FPS 🔥</div>
+          <h1 class="glitch-title">DEADRISE.IO</h1>
+          <p class="tagline">TEAM UP • SHOOT ZOMBIES • SURVIVE ENDLESS WAVES</p>
         </header>
 
         <div class="menu-card glassmorphism">
-          <!-- Game Mode Selector -->
-          <div class="mode-selector">
-            <label>CHOOSE GAME MODE:</label>
-            <div class="mode-options">
-              <button type="button" class="mode-btn selected" data-mode="DEADSHOT_PVP">
-                <span class="mode-icon">🎯</span>
-                <div class="mode-text">
-                  <strong>DEADSHOT PvP</strong>
-                  <small>Free-for-All Combat</small>
-                </div>
-              </button>
-              <button type="button" class="mode-btn" data-mode="DEADRISE_HORDE">
-                <span class="mode-icon">🧟</span>
-                <div class="mode-text">
-                  <strong>DEADRISE HORDE</strong>
-                  <small>Co-op Zombie Survival</small>
-                </div>
-              </button>
+          <div class="input-row">
+            <label>SOLDIER CALLSIGN:</label>
+            <input type="text" id="player-name-input" placeholder="e.g. ApexHunter" maxlength="12" autocomplete="off" />
+          </div>
+
+          <div class="color-picker-row">
+            <label>TACTICAL GLOVES COLOR:</label>
+            <div class="color-options">
+              <button class="color-dot selected" data-color="#00f0ff" style="background:#00f0ff;"></button>
+              <button class="color-dot" data-color="#ff007f" style="background:#ff007f;"></button>
+              <button class="color-dot" data-color="#ffb703" style="background:#ffb703;"></button>
+              <button class="color-dot" data-color="#00f59b" style="background:#00f59b;"></button>
+              <button class="color-dot" data-color="#ff3366" style="background:#ff3366;"></button>
             </div>
           </div>
 
-          <!-- Player Customization -->
-          <div class="player-customization">
-            <div class="input-row">
-              <label>SOLDIER CALLSIGN:</label>
-              <input type="text" id="player-name-input" placeholder="e.g. GhostSniper" maxlength="12" autocomplete="off" />
-            </div>
-
-            <div class="color-picker-row">
-              <label>ARMOR COLOR:</label>
-              <div class="color-options">
-                <button class="color-dot selected" data-color="#00f0ff" style="background:#00f0ff;"></button>
-                <button class="color-dot" data-color="#ff007f" style="background:#ff007f;"></button>
-                <button class="color-dot" data-color="#ffb703" style="background:#ffb703;"></button>
-                <button class="color-dot" data-color="#00f59b" style="background:#00f59b;"></button>
-                <button class="color-dot" data-color="#ff3366" style="background:#ff3366;"></button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Action Buttons -->
           <div class="menu-actions">
-            <button id="quick-play-btn" class="btn btn-primary btn-large glow-btn">⚡ QUICK MATCH (PLAY NOW)</button>
+            <button id="quick-play-btn" class="btn btn-primary btn-large glow-btn">⚡ DEPLOY SOLO / HOST SQUAD</button>
             
             <div class="room-join-row">
-              <input type="text" id="join-room-input" placeholder="ENTER ROOM CODE" maxlength="4" autocomplete="off" />
-              <button id="join-room-btn" class="btn btn-gold">🎮 JOIN ROOM</button>
+              <input type="text" id="join-room-input" placeholder="ROOM CODE" maxlength="4" autocomplete="off" />
+              <button id="join-room-btn" class="btn btn-gold">🎮 JOIN SQUAD</button>
             </div>
           </div>
         </div>
@@ -82,41 +56,39 @@
           <span>🖱️ <strong>MOUSE:</strong> Aim & Shoot</span>
           <span>⚡ <strong>SHIFT:</strong> Sprint</span>
           <span>🔄 <strong>R:</strong> Reload</span>
-          <span>📱 <strong>MOBILE:</strong> Touch Controls</span>
+          <span>🛒 <strong>F:</strong> Arsenal Shop</span>
         </div>
       </div>
     </section>
 
-    <!-- ================= 2. LOBBY / ROOM SHARE SCREEN ================= -->
+    <!-- ================= 2. LOBBY SCREEN ================= -->
     <section id="screen-lobby" class="screen">
       <div class="lobby-card glassmorphism">
         <div class="share-header">
-          <span class="share-tag">INVITE PLAYERS VIA LINK / QR</span>
+          <span class="share-tag">INVITE FRIENDS VIA SHARING URL / QR</span>
           <div class="code-banner">
-            <span class="code-label">ROOM CODE:</span>
+            <span class="code-label">MATCH CODE:</span>
             <h2 id="lobby-room-code">----</h2>
           </div>
           <button id="copy-share-link-btn" class="btn btn-sm btn-gold">📋 COPY SHARING URL</button>
         </div>
 
         <div class="lobby-content-grid">
-          <!-- QR Code Display -->
           <div class="qr-panel">
             <canvas id="qr-canvas"></canvas>
-            <p>Scan with mobile camera to drop in!</p>
+            <p>Scan with phone to join the 3D match!</p>
           </div>
 
-          <!-- Roster -->
           <div class="roster-panel">
-            <h3>CONNECTED SQUAD (<span id="squad-count">0</span>)</h3>
+            <h3>CONNECTED OPERATIVES (<span id="squad-count">0</span>)</h3>
             <div id="lobby-roster-list" class="roster-list"></div>
           </div>
         </div>
 
         <div class="lobby-bottom-actions">
           <div id="host-buttons" class="host-buttons hidden">
-            <button id="start-battle-btn" class="btn btn-primary btn-large glow-btn">🚀 DEPLOY TO BATTLE</button>
-            <button id="add-bot-btn" class="btn btn-outline btn-sm">🤖 + Add AI Combat Bot</button>
+            <button id="start-battle-btn" class="btn btn-primary btn-large glow-btn">🚀 DEPLOY TO 3D SECTOR</button>
+            <button id="add-bot-btn" class="btn btn-outline btn-sm">🤖 + Add AI Squad Mate</button>
           </div>
           <div id="guest-waiting-box" class="guest-waiting-box">
             <div class="radar-spinner"></div>
@@ -126,85 +98,158 @@
       </div>
     </section>
 
-    <!-- ================= 3. ACTIVE GAMEPLAY CANVAS & HUD ================= -->
+    <!-- ================= 3. 3D FPS GAMEPLAY VIEWPORT & HUD ================= -->
     <section id="screen-game" class="screen">
+      <!-- 3D WebGL Canvas -->
+      <div id="webgl-container"></div>
+
+      <!-- Tactical Crosshair & Hit Markers -->
+      <div id="fps-crosshair">
+        <div class="ch-line ch-top"></div>
+        <div class="ch-line ch-bottom"></div>
+        <div class="ch-line ch-left"></div>
+        <div class="ch-line ch-right"></div>
+        <div class="ch-dot"></div>
+        <div id="hitmarker" class="hitmarker hidden"></div>
+      </div>
+
       <!-- HUD Overlay -->
-      <div id="hud-overlay">
-        <!-- Top Status Bar -->
-        <div class="hud-top">
-          <!-- Game Mode / Wave Display -->
-          <div class="hud-box mode-badge">
-            <span id="hud-mode-title">DEADSHOT PvP</span>
-            <span id="hud-wave-title" class="hidden">WAVE 1</span>
+      <div id="fps-hud">
+        <!-- Top Wave Tracker & Cash -->
+        <div class="hud-top-bar">
+          <!-- Top Left Minimap Radar -->
+          <div class="radar-box">
+            <canvas id="radar-canvas" width="130" height="130"></canvas>
           </div>
 
-          <!-- Live Share Link Button in-game -->
-          <button id="ingame-share-btn" class="hud-share-btn" title="Copy Invite Link">🔗 SHARE MATCH LINK</button>
-
-          <!-- Leaderboard Table -->
-          <div class="hud-box leaderboard-box">
-            <span class="hud-label">LEADERBOARD</span>
-            <div id="hud-leaderboard-list"></div>
+          <!-- Center Wave Progress -->
+          <div class="wave-tracker">
+            <div class="wave-dots">
+              <span class="w-dot" data-w="1">1</span>
+              <span class="w-dot" data-w="2">2</span>
+              <span class="w-dot" data-w="3">3</span>
+              <span class="w-dot" data-w="4">4</span>
+              <span class="w-dot boss" data-w="5">BOSS 5</span>
+              <span class="w-dot" data-w="6">6</span>
+              <span class="w-dot" data-w="7">7</span>
+              <span class="w-dot" data-w="8">8</span>
+              <span class="w-dot" data-w="9">9</span>
+              <span class="w-dot boss" data-w="10">BOSS 10</span>
+            </div>
+            <div class="zombies-count-tag">ZOMBIES REMAINING: <span id="hud-zombies-count">0</span></div>
           </div>
-        </div>
 
-        <!-- Radar Minimap -->
-        <div id="minimap-wrapper">
-          <canvas id="minimap-canvas" width="150" height="110"></canvas>
+          <!-- Top Right Cash & Shop Button -->
+          <div class="hud-top-right">
+            <div class="cash-badge">💰 <span id="hud-cash-display">$1,000</span></div>
+            <button id="open-store-btn" class="hud-btn store-btn">🛒 [F] ARSENAL</button>
+            <button id="ingame-share-btn" class="hud-btn share-btn">🔗 SHARE LINK</button>
+          </div>
         </div>
 
         <!-- Killfeed Alerts -->
         <div id="kill-feed-container"></div>
 
-        <!-- Wave / Level Clear Banner -->
+        <!-- Wave Cleared / Boss Banner -->
         <div id="wave-banner" class="hidden">
           <h2 id="wave-banner-title">WAVE 1</h2>
+          <p id="wave-banner-subtitle">PREPARE YOUR DEFENSES</p>
         </div>
 
-        <!-- Bottom Health, Armor & Ammo Controls -->
-        <div class="hud-bottom">
-          <!-- Health & Armor Meters -->
-          <div class="vitals-group">
-            <div class="vital-bar">
-              <span class="vital-txt">ARMOR <span id="armor-val">50</span></span>
-              <div class="bar-track"><div id="armor-fill" class="bar-progress armor"></div></div>
+        <!-- Pointer Lock Click-to-Play Notice -->
+        <div id="pointer-lock-overlay" class="hidden">
+          <div class="click-notice">
+            <h2>CLICK ANYWHERE TO AIM & SHOOT</h2>
+            <p>[ESC] to release mouse cursor</p>
+          </div>
+        </div>
+
+        <!-- Bottom HUD: Health, Armor, Weapon & Ammo -->
+        <div class="hud-bottom-bar">
+          <!-- Health & Armor (Bottom-Left) -->
+          <div class="vitals-panel">
+            <div class="health-row">
+              <span class="plus-icon">+</span>
+              <span id="hud-health-val" class="health-num">100</span>
             </div>
-            <div class="vital-bar">
-              <span class="vital-txt">HEALTH <span id="health-val">100</span></span>
-              <div class="bar-track"><div id="health-fill" class="bar-progress health"></div></div>
+            <div class="bar-track">
+              <div id="hud-health-fill" class="bar-fill health"></div>
             </div>
-            <div class="stamina-track"><div id="stamina-fill" class="stamina-progress"></div></div>
+            <div class="armor-row">
+              <span class="armor-txt">ARMOR: <span id="hud-armor-val">50</span></span>
+              <div class="bar-track armor-track">
+                <div id="hud-armor-fill" class="bar-fill armor"></div>
+              </div>
+            </div>
           </div>
 
-          <!-- Ammo & Weapon Display -->
-          <div class="weapon-hud-card">
-            <div class="weapon-title" id="weapon-name-display">ASSAULT RIFLE</div>
-            <div class="ammo-display">
-              <span id="current-ammo">30</span>
-              <span class="max-ammo" id="max-ammo">/ 30</span>
+          <!-- Tactical Weapon & Ammo (Bottom-Right) -->
+          <div class="weapon-ammo-panel">
+            <div class="weapon-name-tag" id="hud-weapon-name">SCAR-H ASSAULT</div>
+            <div class="ammo-numbers">
+              <span id="hud-ammo-clip">30</span>
+              <span class="ammo-slash">|</span>
+              <span id="hud-ammo-reserve" class="reserve-ammo">180</span>
             </div>
-            <div id="reload-indicator" class="reload-badge hidden">RELOADING...</div>
+            <div id="hud-reload-prompt" class="reload-tag hidden">RELOADING...</div>
           </div>
         </div>
 
         <!-- Mobile Touch Controls -->
         <div id="mobile-touch-ui" class="mobile-only">
-          <div class="joystick-zone" id="joystick-zone">
-            <div class="joystick-base">
-              <div class="joystick-stick" id="joystick-stick"></div>
-            </div>
+          <div class="touch-left-stick" id="touch-stick-zone">
+            <div class="stick-knob" id="stick-knob"></div>
           </div>
-
-          <div class="touch-action-buttons">
-            <button id="btn-sprint-touch" class="t-btn sprint-btn">⚡ SPRINT</button>
-            <button id="btn-reload-touch" class="t-btn reload-btn">🔄 RELOAD</button>
-            <button id="btn-shoot-touch" class="t-btn fire-btn">🔥 FIRE</button>
+          <div class="touch-right-actions">
+            <button id="m-btn-sprint" class="t-btn sprint">⚡ SPRINT</button>
+            <button id="m-btn-reload" class="t-btn reload">🔄 [R]</button>
+            <button id="m-btn-store" class="t-btn store">🛒 [F]</button>
+            <button id="m-btn-fire" class="t-btn fire">🔥 FIRE</button>
           </div>
         </div>
       </div>
 
-      <!-- Main Game Canvas -->
-      <canvas id="game-canvas"></canvas>
+      <!-- Arsenal Shop Modal (Press F) -->
+      <div id="store-modal" class="hidden">
+        <div class="store-card glassmorphism">
+          <div class="store-header">
+            <h2>🛒 TACTICAL ARSENAL SHOP</h2>
+            <button id="close-store-btn" class="btn btn-sm btn-outline">✕ CLOSE [F]</button>
+          </div>
+          <div class="store-items-grid">
+            <div class="store-item">
+              <h3>SPAS-12 Shotgun</h3>
+              <p>Close-quarters zombie shredder</p>
+              <span class="price-tag">$1,200</span>
+              <button class="btn btn-sm btn-gold buy-btn" data-item="shotgun">BUY</button>
+            </div>
+            <div class="store-item">
+              <h3>AWM Heavy Sniper</h3>
+              <p>1-Shot precision headshots</p>
+              <span class="price-tag">$2,000</span>
+              <button class="btn btn-sm btn-gold buy-btn" data-item="sniper">BUY</button>
+            </div>
+            <div class="store-item">
+              <h3>Plasma Launcher</h3>
+              <p>Explosive horde clearance</p>
+              <span class="price-tag">$2,800</span>
+              <button class="btn btn-sm btn-gold buy-btn" data-item="plasma">BUY</button>
+            </div>
+            <div class="store-item">
+              <h3>Full Ammo Refill</h3>
+              <p>Restores reserve magazines</p>
+              <span class="price-tag">$300</span>
+              <button class="btn btn-sm btn-primary buy-ammo-btn">BUY</button>
+            </div>
+            <div class="store-item">
+              <h3>Kevlar Armor Vest</h3>
+              <p>Restores 50 armor shielding</p>
+              <span class="price-tag">$400</span>
+              <button class="btn btn-sm btn-primary buy-armor-btn">BUY</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
   </div>
